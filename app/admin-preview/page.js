@@ -53,7 +53,6 @@ export default function AdminPreviewPage() {
         <div className="legacy-actions" style={{ marginTop: 14 }}>
           <Link href="/login">Sign In</Link>
           <Link href="/admin">Open Admin</Link>
-          <Link href="/legacy/admin-preview">Legacy Preview</Link>
         </div>
       </div>
     </main>

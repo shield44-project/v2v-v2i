@@ -1,23 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import Script from "next/script";
+import { useEffect, useState } from "react";
+import { bootLegacyBridge } from "../lib/firebase/legacyBridge";
 
 export default function LegacyFirebaseScripts({ onReady }) {
   const [appReady, setAppReady] = useState(false);
 
-  const handleReady = () => {
+  useEffect(() => {
     if (appReady) return;
+    const ok = bootLegacyBridge();
+    if (!ok) return;
     setAppReady(true);
     if (onReady) onReady();
-  };
+  }, [appReady, onReady]);
 
-  return (
-    <>
-      <Script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" strategy="afterInteractive" />
-      <Script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" strategy="afterInteractive" />
-      <Script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" strategy="afterInteractive" />
-      <Script src="/firebase-config.js" strategy="afterInteractive" onLoad={handleReady} />
-    </>
-  );
+  return null;
 }

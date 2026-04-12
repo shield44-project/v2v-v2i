@@ -18,6 +18,13 @@ Because this app uses Firebase Auth in the browser, add your Vercel domain to Fi
 
 Without this, Google sign-in can fail with auth domain errors.
 
+If you see `auth/unauthorized-domain`, this is the fix:
+
+- Firebase Console -> Authentication -> Settings -> Authorized domains
+- Add the exact Vercel host serving your app (for example `v2v-v2i-project.vercel.app`)
+- Add your custom domain host too, if configured
+- Do not include protocol (`https://`) or path
+
 ## 3. Deploy on Vercel
 
 ### Option A: Vercel Dashboard
@@ -50,15 +57,12 @@ Validate these routes:
 - `/signal`
 - `/vehicle1`
 - `/vehicle2`
-- `/legacy/control`
 
 ## 5. Caching and Service Worker Notes
 
 This repo sets headers in `next.config.mjs` to support Vercel hosting:
 
 - `sw.js` is forced no-cache for safe service worker updates
-- legacy `.html` pages use no-cache
-- `.js` static scripts use short public caching
 
 ## 6. If Migrating from Firebase Hosting
 
@@ -80,10 +84,11 @@ firebase deploy --only hosting:v2v-v2i-6f64c
 - Ensure your Vercel domain is in Firebase authorized domains
 - Check browser popup permissions
 
-### Legacy route not loading
+### Google auth unauthorized domain on Vercel
 
-- Verify Next rewrites in `next.config.mjs`
-- Confirm target HTML exists in `public/`
+- Verify the deployed host in Vercel dashboard
+- Add that host in Firebase Authorized domains
+- Hard refresh after saving Firebase settings
 
 ### Service worker stale behavior
 

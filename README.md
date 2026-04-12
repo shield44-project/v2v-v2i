@@ -45,7 +45,6 @@ npm run dev
 Open:
 - `http://localhost:3000/` for Next.js home
 - `http://localhost:3000/login` for module routes
-- `http://localhost:3000/index.html` for direct legacy entry
 
 ## Deploy To Vercel
 
@@ -57,6 +56,7 @@ Open:
 Required Firebase step:
 - Add `<your-project>.vercel.app` in Firebase Authentication -> Settings -> Authorized domains.
 - Add your custom domain too, if used.
+- If you get `auth/unauthorized-domain`, add the exact deployed Vercel host and reload.
 
 Optional Firebase Hosting deploy (static target):
 
@@ -66,8 +66,8 @@ firebase deploy --only hosting:v2v-v2i-6f64c
 
 ## Important Notes
 
-- Firebase and mapping logic remain in legacy scripts for compatibility.
-- This is a safe migration layer. Full React-native refactor can happen incrementally.
+- Firebase compatibility is now initialized from Next modules.
+- App routes are Next-native.
 - Native role routes include offline-aware sync indicators and reconnect flush for GPS updates.
 
 ## Documentation

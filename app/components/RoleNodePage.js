@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "./LegacyFirebaseScripts";
+import { AdvancedGPSTracker, getGPSWatchOptions } from "../lib/gps/advancedTracker";
+import { SIMULATION_CONFIG } from "../lib/config/simulation";
 
 function calcDistance(a, b) {
   if (!a || !b) return null;
@@ -23,6 +25,9 @@ function calcDistance(a, b) {
 export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSignal = false }) {
   const router = useRouter();
   const watchRef = useRef(null);
+  const trackerRef = useRef(new AdvancedGPSTracker({
+    maxJumpMeters: SIMULATION_CONFIG.motion.maxVehicleJumpMeters
+  }));
   const vehicleTypeRef = useRef("ambulance");
   const signalStateRef = useRef("RED");
   const pendingUpdateRef = useRef(null);
@@ -32,13 +37,14 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
   const [position, setPosition] = useState(null);
   const [emergencyPos, setEmergencyPos] = useState(null);
   const [signalPos, setSignalPos] = useState(null);
-  const [v2vRange, setV2vRange] = useState(25);
-  const [v2iRange, setV2iRange] = useState(50);
+  const [v2vRange, setV2vRange] = useState(SIMULATION_CONFIG.defaultRanges.v2v);
+  const [v2iRange, setV2iRange] = useState(SIMULATION_CONFIG.defaultRanges.v2i);
   const [vehicleType, setVehicleType] = useState("ambulance");
   const [signalState, setSignalState] = useState("RED");
   const [statusText, setStatusText] = useState("Waiting for GPS lock...");
   const [isOnline, setIsOnline] = useState(true);
   const [lastSyncAt, setLastSyncAt] = useState("");
+  const [gpsReport, setGpsReport] = useState({ readings: 0, outliersRejected: 0, confidence: 0, accuracy: null });
 
   const canUseLegacy = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
@@ -99,13 +105,13 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
 
     const ranges = window.getRangeConfig?.();
     if (ranges) {
-      setV2vRange(ranges.v2v || 25);
-      setV2iRange(ranges.v2i || 50);
+      setV2vRange(ranges.v2v || SIMULATION_CONFIG.defaultRanges.v2v);
+      setV2iRange(ranges.v2i || SIMULATION_CONFIG.defaultRanges.v2i);
     }
 
     const onRanges = (e) => {
-      setV2vRange(e.detail?.v2v || 25);
-      setV2iRange(e.detail?.v2i || 50);
+      setV2vRange(e.detail?.v2v || SIMULATION_CONFIG.defaultRanges.v2v);
+      setV2iRange(e.detail?.v2i || SIMULATION_CONFIG.defaultRanges.v2i);
     };
     document.addEventListener("rangesUpdated", onRanges);
 
@@ -125,12 +131,22 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
     if (navigator.geolocation) {
       watchRef.current = navigator.geolocation.watchPosition(
         async (geo) => {
+          const filtered = trackerRef.current.process(geo.coords);
+          setGpsReport(trackerRef.current.getReport());
+
+          if (filtered.rejected) {
+            setStatusText("GPS spike filtered");
+            return;
+          }
+
           const next = {
-            lat: geo.coords.latitude,
-            lng: geo.coords.longitude,
-            accuracy: geo.coords.accuracy,
-            heading: geo.coords.heading || 0,
-            speed: geo.coords.speed || 0,
+            lat: filtered.lat,
+            lng: filtered.lng,
+            accuracy: filtered.accuracy,
+            heading: filtered.heading || 0,
+            speed: filtered.speed || 0,
+            confidence: filtered.confidence,
+            kalmanGain: filtered.kalmanGain,
             active: true,
             timestamp: new Date().toISOString(),
             t: window.firebase.database.ServerValue.TIMESTAMP
@@ -138,7 +154,7 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
 
           if (isEmergency) next.type = vehicleTypeRef.current;
           if (isSignal) next.state = signalStateRef.current;
-
+          setStatusText("GPS active (filtered)");
           setPosition(next);
           setStatusText("GPS active");
 
@@ -161,7 +177,7 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
           const msg = err?.code === 1 ? "GPS permission denied" : err?.message || "GPS unavailable";
           setStatusText(msg);
         },
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 }
+        getGPSWatchOptions()
       );
     } else {
       setStatusText("Geolocation not supported on this browser");
@@ -211,7 +227,6 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
           </div>
           <div className="legacy-actions">
             <button type="button" onClick={() => router.push("/user-portal")}>Back to Role Select</button>
-            <button type="button" onClick={() => router.push("/legacy/" + nodeKey)}>Legacy Page</button>
           </div>
         </div>
 
@@ -221,6 +236,8 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
           <div className="rchip">V2V Range: <strong>{v2vRange}m</strong></div>
           <div className="rchip">V2I Range: <strong>{v2iRange}m</strong></div>
           <div className="rchip">Last Sync: <strong>{lastSyncAt || "-"}</strong></div>
+          <div className="rchip">GPS Confidence: <strong>{Math.round((gpsReport.confidence || 0) * 100)}%</strong></div>
+          <div className="rchip">Rejected Spikes: <strong>{gpsReport.outliersRejected || 0}</strong></div>
         </div>
 
         {position && (

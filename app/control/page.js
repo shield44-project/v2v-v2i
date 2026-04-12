@@ -95,7 +95,6 @@ export default function ControlPage() {
           </div>
           <div className="legacy-actions">
             <button type="button" onClick={() => router.push("/admin")}>Open Admin</button>
-            <button type="button" onClick={() => router.push("/legacy/control")}>Legacy Full Control</button>
           </div>
         </div>
 
