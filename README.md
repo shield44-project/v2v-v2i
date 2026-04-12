@@ -57,7 +57,7 @@ Open `http://localhost:3000`.
 
 ## 4) Security baseline included
 
-- Server-side route protection for `/dashboard` and redirect logic on `/signin`.
+- Server-side route protection in `app/dashboard/page.tsx` (`auth()` + redirect) and signed-in redirect logic in `app/signin/page.tsx`.
 - Encrypted Auth.js sessions (JWT strategy).
 - Security headers via Next config:
   - `X-Frame-Options: DENY`
