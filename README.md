@@ -1,0 +1,72 @@
+# V2X Connect (Next.js + TypeScript + Vercel Google Sign-In)
+
+This repository now ships a refactored web app in `/home/runner/work/v2v-v2i/v2v-v2i/web` using:
+
+- Next.js (App Router)
+- TypeScript
+- Auth.js (`next-auth`) with Google OAuth
+- Vercel-ready deployment flow
+
+Firebase auth/runtime files have been removed from the active app path.
+
+## 1) Your setup steps (required)
+
+### A. Create Google OAuth credentials
+1. Open Google Cloud Console → APIs & Services → Credentials.
+2. Create an **OAuth Client ID** (Web application).
+3. Add these authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google`
+   - `https://<your-vercel-domain>/api/auth/callback/google`
+4. Copy:
+   - Client ID
+   - Client Secret
+
+### B. Set environment variables
+In `/home/runner/work/v2v-v2i/v2v-v2i/web`, create `.env.local` from `.env.example`:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill:
+- `AUTH_SECRET` (strong random string)
+- `AUTH_GOOGLE_ID`
+- `AUTH_GOOGLE_SECRET`
+- `NEXTAUTH_URL` (`http://localhost:3000` locally)
+
+### C. Configure Vercel project variables
+In Vercel Project Settings → Environment Variables, add:
+- `AUTH_SECRET`
+- `AUTH_GOOGLE_ID`
+- `AUTH_GOOGLE_SECRET`
+- `NEXTAUTH_URL=https://<your-vercel-domain>`
+
+## 2) Local run
+
+```bash
+cd /home/runner/work/v2v-v2i/v2v-v2i/web
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## 3) Verification checklist
+
+- Home page loads.
+- `/signin` opens Google consent.
+- After Google login, user lands on `/dashboard`.
+- `/dashboard` is inaccessible when signed out (redirects to `/signin`).
+- Sign out returns to `/`.
+
+## 4) Security baseline included
+
+- Route protection middleware for `/dashboard`.
+- Encrypted Auth.js sessions (JWT strategy).
+- Security headers via Next config:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` hardening
+  - `Strict-Transport-Security`
+- No Firebase client keys in active runtime.
