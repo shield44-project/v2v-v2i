@@ -1,0 +1,51 @@
+import { auth, signIn } from "@/auth";
+import { redirect } from "next/navigation";
+
+export default async function SignInPage() {
+  const session = await auth();
+  const isGoogleConfigured = Boolean(
+    process.env.AUTH_GOOGLE_ID &&
+      process.env.AUTH_GOOGLE_SECRET &&
+      process.env.AUTH_SECRET,
+  );
+
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-6">
+      <section className="w-full rounded-2xl border border-white/10 bg-slate-950/70 p-8 text-center shadow-2xl backdrop-blur">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">Secure Access</p>
+        <h1 className="mt-3 text-3xl font-bold text-white">Sign in to V2X Connect</h1>
+        <p className="mt-3 text-slate-300">
+          Use your Google account. Sessions are encrypted and protected by Auth.js.
+        </p>
+        {!isGoogleConfigured && (
+          <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            Configure AUTH_SECRET, AUTH_GOOGLE_ID, and AUTH_GOOGLE_SECRET in
+            environment variables before signing in.
+          </p>
+        )}
+        <form
+          className="mt-8"
+          action={async () => {
+            "use server";
+            if (!isGoogleConfigured) {
+              return;
+            }
+            await signIn("google", { redirectTo: "/dashboard" });
+          }}
+        >
+          <button
+            className="btn-primary w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            type="submit"
+            disabled={!isGoogleConfigured}
+          >
+            Continue with Google
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
