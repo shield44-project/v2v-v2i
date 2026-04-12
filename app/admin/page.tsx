@@ -13,6 +13,10 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [stats, setStats] = useState({ users: 0, admins: 0, banned: 0, pending: 0 });
   const [users, setUsers] = useState<any[]>([]);
+  const [adminIds, setAdminIds] = useState<Record<string, boolean>>({});
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "admin" | "banned">("all");
+  const [busyUid, setBusyUid] = useState("");
 
   const canUseLegacy = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
@@ -47,7 +51,14 @@ export default function AdminPage() {
           setUsers(list.sort((a, b) => String(b.lastSeen || "").localeCompare(String(a.lastSeen || ""))));
           setStats((prev) => ({ ...prev, users: list.length }));
         }
-        if (idx === 1) setStats((prev) => ({ ...prev, admins: Object.keys(value).length }));
+        if (idx === 1) {
+          setStats((prev) => ({ ...prev, admins: Object.keys(value).length }));
+          const ids: Record<string, boolean> = {};
+          Object.keys(value).forEach((k) => {
+            ids[k] = true;
+          });
+          setAdminIds(ids);
+        }
         if (idx === 2) setStats((prev) => ({ ...prev, banned: Object.keys(value).length }));
         if (idx === 3) setStats((prev) => ({ ...prev, pending: Object.keys(value).length }));
       })
@@ -74,12 +85,28 @@ export default function AdminPage() {
     }
   };
 
-  const runAction = async (fn: () => Promise<any>) => {
+  const filteredUsers = useMemo(() => {
+    const lower = query.trim().toLowerCase();
+    return users.filter((u) => {
+      const isAdmin = Boolean(adminIds[u.uid]);
+      const isBanned = (u.status || "") === "banned";
+      if (filter === "admin" && !isAdmin) return false;
+      if (filter === "banned" && !isBanned) return false;
+      if (!lower) return true;
+      return (u.name || "").toLowerCase().includes(lower) || (u.email || "").toLowerCase().includes(lower);
+    });
+  }, [users, query, filter, adminIds]);
+
+  const runAction = async (uid: string, fn: () => Promise<any>, label: string) => {
+    if (busyUid) return;
+    setBusyUid(uid);
     try {
       await fn();
-      setMessage("Action completed.");
+      setMessage(label + " completed.");
     } catch (err: any) {
       setMessage(err?.message || "Action failed.");
+    } finally {
+      setBusyUid("");
     }
   };
 
@@ -92,14 +119,28 @@ export default function AdminPage() {
         actions={<button type="button" onClick={() => router.push("/control")}>Open Control</button>}
       />
 
-      <ChipRow className="chip-grid" style={{ marginTop: 14 }}>
+      <ChipRow className="chip-grid mt-14">
         <div className="rchip">Users: <strong>{stats.users}</strong></div>
         <div className="rchip">Admins: <strong>{stats.admins}</strong></div>
         <div className="rchip">Banned: <strong>{stats.banned}</strong></div>
         <div className="rchip">Pending: <strong>{stats.pending}</strong></div>
       </ChipRow>
 
-      <form className="inline-form" onSubmit={inviteAdmin} style={{ marginTop: 14, display: "grid", gap: 10, gridTemplateColumns: "1fr auto" }}>
+      <div className="filter-row mt-12">
+        <input
+          className="form-inp"
+          placeholder="Search users by name or email"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="legacy-actions filter-actions">
+          <button className="filter-chip" type="button" data-active={filter === "all"} onClick={() => setFilter("all")}>All</button>
+          <button className="filter-chip" type="button" data-active={filter === "admin"} onClick={() => setFilter("admin")}>Admins</button>
+          <button className="filter-chip" type="button" data-active={filter === "banned"} onClick={() => setFilter("banned")}>Banned</button>
+        </div>
+      </div>
+
+      <form className="inline-form mt-14" onSubmit={inviteAdmin}>
         <input
           className="form-inp"
           placeholder="Invite admin by email"
@@ -112,8 +153,8 @@ export default function AdminPage() {
       {message && <StatusMessage>{message}</StatusMessage>}
 
       <TableCard>
-        <div style={{ marginTop: 14, overflowX: "auto" }}>
-          <table className="simple-table">
+        <div className="table-scroll">
+          <table className="simple-table mobile-table">
             <thead>
               <tr>
                 <th>User</th>
@@ -123,41 +164,54 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {users.slice(0, 60).map((user) => (
+              {filteredUsers.slice(0, 60).map((user) => {
+                const disabled = busyUid.length > 0;
+                const isBanned = (user.status || "") === "banned";
+                return (
                 <tr key={user.uid}>
-                  <td>{user.name || user.uid}</td>
-                  <td>{user.email || "-"}</td>
-                  <td>{user.status || "active"}</td>
-                  <td>
-                    <div className="legacy-actions action-pack" style={{ gap: 6 }}>
+                  <td data-label="User">{user.name || user.uid}</td>
+                  <td data-label="Email">{user.email || "-"}</td>
+                  <td data-label="Status">{isBanned ? "banned" : (user.status || "active")}</td>
+                  <td data-label="Actions">
+                    <div className="legacy-actions action-pack compact-gap">
                       <button
                         type="button"
-                        onClick={() => runAction(() => window.promoteToAdmin(user.uid, user.email || "", user.name || "", session?.uid))}
+                        disabled={disabled}
+                        onClick={() => runAction(user.uid, () => window.promoteToAdmin(user.uid, user.email || "", user.name || "", session?.uid), "Promote")}
                       >
                         Promote
                       </button>
                       <button
                         type="button"
-                        onClick={() => runAction(() => window.demoteAdmin(user.uid, user.email || ""))}
+                        disabled={disabled}
+                        onClick={() => runAction(user.uid, () => window.demoteAdmin(user.uid, user.email || ""), "Demote")}
                       >
                         Demote
                       </button>
                       <button
                         type="button"
-                        onClick={() => runAction(() => window.banUser(user.uid, user.email || "", "Admin action", session?.uid))}
+                        disabled={disabled}
+                        onClick={() => runAction(user.uid, () => window.banUser(user.uid, user.email || "", "Admin action", session?.uid), "Ban")}
                       >
                         Ban
                       </button>
                       <button
                         type="button"
-                        onClick={() => runAction(() => window.unbanUser(user.uid))}
+                        disabled={disabled}
+                        onClick={() => runAction(user.uid, () => window.unbanUser(user.uid), "Unban")}
                       >
                         Unban
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
+              {!filteredUsers.length && (
+                <tr className="empty-row">
+                  <td colSpan={4} className="empty-cell">No users match this filter.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

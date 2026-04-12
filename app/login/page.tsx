@@ -202,8 +202,24 @@ export default function LoginPage() {
         <h1>V2X Login</h1>
         <p>Native Next.js login page using your existing Firebase and session model.</p>
       </div>
+
+      <div className="gateway-grid mt-14">
+        <a href="/control" className="gateway-card">
+          <strong>Admin Route</strong>
+          <span>Open command and moderation workflows for authorized operators.</span>
+        </a>
+        <a href="/user-portal" className="gateway-card">
+          <strong>User Route</strong>
+          <span>Select emergency, signal, or vehicle modules after sign in.</span>
+        </a>
+        <a href="/admin-preview" className="gateway-card">
+          <strong>Public Preview</strong>
+          <span>View lightweight public status without privileged actions.</span>
+        </a>
+      </div>
+
       {hostLabel && (
-        <p className="meta-pill" style={{ marginTop: 8 }}>
+        <p className="meta-pill mt-8">
           <strong>Current Host:</strong> {hostLabel}
         </p>
       )}
@@ -211,10 +227,10 @@ export default function LoginPage() {
       {!scriptsReady && <StatusMessage>Loading Firebase scripts and auth bridge...</StatusMessage>}
 
       {alreadyIn && (
-        <div className="legacy-header" style={{ marginTop: 16 }}>
+        <div className="legacy-header mt-16">
           <div>
             <strong>Already signed in:</strong> {alreadyIn.user}
-            <p style={{ margin: "6px 0 0" }}>{alreadyIn.isAdmin ? "Admin session" : "User session"}</p>
+            <p className="session-note">{alreadyIn.isAdmin ? "Admin session" : "User session"}</p>
           </div>
           <div className="legacy-actions">
             <button type="button" onClick={() => redirectForSession(alreadyIn)}>Continue</button>
@@ -223,19 +239,19 @@ export default function LoginPage() {
         </div>
       )}
 
-      <div style={{ marginTop: 16 }} className="legacy-actions action-row">
+      <div className="legacy-actions action-row mt-16">
         <button type="button" onClick={signInGoogle} disabled={!canUseFirebase || busy}>
           {busy ? "Signing in..." : "Continue with Google"}
         </button>
       </div>
 
-      <div style={{ marginTop: 16 }} className="legacy-actions mode-toggle">
+      <div className="legacy-actions mode-toggle mt-16">
         <button className="mode-btn" type="button" onClick={() => setMode("admin")} aria-pressed={mode === "admin"}>Admin</button>
         <button className="mode-btn" type="button" onClick={() => setMode("guest")} aria-pressed={mode === "guest"}>Guest</button>
       </div>
 
       {mode === "admin" ? (
-        <form className="stack-form" onSubmit={loginAdmin} style={{ marginTop: 16, display: "grid", gap: 10 }}>
+        <form className="stack-form mt-16" onSubmit={loginAdmin}>
           <input
             className="form-inp"
             placeholder="Admin email or demo username 'admin'"
@@ -254,7 +270,7 @@ export default function LoginPage() {
           </button>
         </form>
       ) : (
-        <form className="stack-form" onSubmit={continueGuest} style={{ marginTop: 16, display: "grid", gap: 10 }}>
+        <form className="stack-form mt-16" onSubmit={continueGuest}>
           <input
             className="form-inp"
             placeholder="Your name or call sign"

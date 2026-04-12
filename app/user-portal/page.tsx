@@ -94,15 +94,26 @@ export default function UserPortalPage() {
         actions={<button type="button" onClick={() => router.push("/login")}>Back to Login</button>}
       />
 
-      <ChipRow className="chip-grid" style={{ marginTop: 14 }}>
+      <ChipRow className="chip-grid mt-14">
         <div className="rchip">V2V Range: <strong>{v2v}m</strong></div>
         <div className="rchip">V2I Range: <strong>{v2i}m</strong></div>
         <div className="rchip">Session: <strong>{session?.user || "-"}</strong></div>
       </ChipRow>
 
+      <div className="portal-quick-links mt-12">
+        <a href="/">Dashboard Home</a>
+        <a href="/admin-preview">Public Preview</a>
+        <a href="/archive">Archive</a>
+      </div>
+
       {message && <StatusMessage>{message}</StatusMessage>}
 
-      <div className="routes role-grid" style={{ marginTop: 14 }}>
+      <div className="portal-role-head mt-14">
+        <h2>Choose Active Role</h2>
+        <p>Select the module you want to operate. Session role is persisted automatically.</p>
+      </div>
+
+      <div className="routes role-grid mt-14">
         {roleCards.map((role) => (
           <button
             key={role.id}
@@ -112,7 +123,7 @@ export default function UserPortalPage() {
             disabled={!session || busyRole.length > 0}
           >
             <strong>{role.emoji} {role.title}</strong>
-            <div className="role-meta" style={{ fontSize: 12, marginTop: 4 }}>
+            <div className="role-meta text-meta-sm">
               {busyRole === role.id ? "Connecting..." : "Open module route " + role.href}
             </div>
           </button>

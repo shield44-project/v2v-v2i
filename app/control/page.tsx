@@ -15,6 +15,9 @@ export default function ControlPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [units, setUnits] = useState<Record<string, any>>({});
   const [message, setMessage] = useState("");
+  const [eventQuery, setEventQuery] = useState("");
+  const [eventType, setEventType] = useState<"all" | "alert" | "info" | "v2v" | "v2i">("all");
+  const [broadcast, setBroadcast] = useState("");
 
   const canUseLegacy = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
@@ -85,6 +88,33 @@ export default function ControlPage() {
     }
   };
 
+  const onlineCount = unitKeys.filter((key) => units[key]?.active).length;
+
+  const filteredEvents = useMemo(() => {
+    const q = eventQuery.trim().toLowerCase();
+    return events.filter((e) => {
+      if (eventType !== "all" && String(e.type || "").toLowerCase() !== eventType) return false;
+      if (!q) return true;
+      return String(e.message || "").toLowerCase().includes(q) || String(e.type || "").toLowerCase().includes(q);
+    });
+  }, [events, eventQuery, eventType]);
+
+  const sendBroadcast = async () => {
+    const msg = broadcast.trim();
+    if (!msg) return;
+    try {
+      await window.db.ref("v4/broadcast").set({
+        message: msg,
+        timestamp: new Date().toISOString(),
+        from: session?.user || "control"
+      });
+      setBroadcast("");
+      setMessage("Broadcast sent.");
+    } catch (err: any) {
+      setMessage(err?.message || "Broadcast failed.");
+    }
+  };
+
   return (
     <PageShell pageClassName="control-page" cardClassName="control-card" maxWidth={1200}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
@@ -94,13 +124,13 @@ export default function ControlPage() {
         actions={<button type="button" onClick={() => router.push("/admin")}>Open Admin</button>}
       />
 
-      <ChipRow className="unit-grid" style={{ marginTop: 14 }}>
+      <ChipRow className="unit-grid mt-14">
         {unitKeys.map((key) => {
           const unit = units[key] || {};
           return (
             <div key={key} className="rchip unit-chip">
               <strong>{key}</strong>
-              <div className="unit-meta" style={{ fontSize: 12, marginTop: 4 }}>
+              <div className="unit-meta text-meta-sm">
                 {unit.active ? "online" : "idle"} | {unit.lat ? `${Number(unit.lat).toFixed(5)}, ${Number(unit.lng).toFixed(5)}` : "no location"}
               </div>
             </div>
@@ -108,41 +138,71 @@ export default function ControlPage() {
         })}
       </ChipRow>
 
-      <ChipRow className="range-bar" style={{ marginTop: 14 }}>
+      <ChipRow className="chip-grid mt-10">
+        <div className="rchip">Online Units: <strong>{onlineCount}/{unitKeys.length}</strong></div>
+        <div className="rchip">Event Feed: <strong>{events.length}</strong></div>
+      </ChipRow>
+
+      <ChipRow className="range-bar mt-14">
         <label className="rchip range-chip">
           V2V Range
           <input
-            className="range-input"
+            className="range-input range-input-sm"
             type="number"
             min={5}
             max={1000}
             step={1}
             value={ranges.rangeV2V}
             onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2V: Number(e.target.value) }))}
-            style={{ marginLeft: 8, width: 90 }}
           />
         </label>
         <label className="rchip range-chip">
           V2I Range
           <input
-            className="range-input"
+            className="range-input range-input-sm"
             type="number"
             min={10}
             max={2000}
             step={1}
             value={ranges.rangeV2I}
             onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2I: Number(e.target.value) }))}
-            style={{ marginLeft: 8, width: 90 }}
           />
         </label>
         <button className="submit-btn submit-user" type="button" onClick={saveRanges}>Save Ranges</button>
       </ChipRow>
 
+      <div className="filter-row mt-12">
+        <input
+          className="form-inp"
+          placeholder="Search events"
+          value={eventQuery}
+          onChange={(e) => setEventQuery(e.target.value)}
+        />
+        <div className="legacy-actions filter-actions">
+          <button className="filter-chip" type="button" data-active={eventType === "all"} onClick={() => setEventType("all")}>All</button>
+          <button className="filter-chip" type="button" data-active={eventType === "alert"} onClick={() => setEventType("alert")}>Alert</button>
+          <button className="filter-chip" type="button" data-active={eventType === "info"} onClick={() => setEventType("info")}>Info</button>
+          <button className="filter-chip" type="button" data-active={eventType === "v2v"} onClick={() => setEventType("v2v")}>V2V</button>
+          <button className="filter-chip" type="button" data-active={eventType === "v2i"} onClick={() => setEventType("v2i")}>V2I</button>
+        </div>
+      </div>
+
+      <form className="inline-form mt-10" onSubmit={(e) => { e.preventDefault(); sendBroadcast(); }}>
+        <input
+          className="form-inp"
+          placeholder="Broadcast message to all nodes"
+          value={broadcast}
+          onChange={(e) => setBroadcast(e.target.value)}
+          maxLength={140}
+        />
+        <button className="submit-btn submit-admin" type="submit">Send</button>
+      </form>
+
       {message && <StatusMessage>{message}</StatusMessage>}
 
       <TableCard>
-        <div style={{ marginTop: 14, overflowX: "auto" }}>
-          <table className="simple-table">
+        <div className="table-scroll">
+          <table className="simple-table mobile-table">
             <thead>
               <tr>
                 <th>Time</th>
@@ -151,13 +211,18 @@ export default function ControlPage() {
               </tr>
             </thead>
             <tbody>
-              {events.map((event, idx) => (
+              {filteredEvents.map((event, idx) => (
                 <tr key={idx}>
-                  <td>{event.timestamp || "-"}</td>
-                  <td>{event.type || "-"}</td>
-                  <td>{event.message || "-"}</td>
+                  <td data-label="Time">{event.timestamp || "-"}</td>
+                  <td data-label="Type">{event.type || "-"}</td>
+                  <td data-label="Message">{event.message || "-"}</td>
                 </tr>
               ))}
+              {!filteredEvents.length && (
+                <tr className="empty-row">
+                  <td colSpan={3} className="empty-cell">No events match the selected filters.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

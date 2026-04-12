@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "./LegacyFirebaseScripts";
 import { AdvancedGPSTracker, getGPSWatchOptions } from "../lib/gps/advancedTracker";
 import { SIMULATION_CONFIG } from "../lib/config/simulation";
+import { ChipRow, PageShell, PanelHeader, StatusMessage, TableCard } from "./LiveBlocks";
 
 function calcDistance(a, b) {
   if (!a || !b) return null;
@@ -217,82 +218,72 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
   };
 
   return (
-    <main className="page">
+    <PageShell pageClassName="role-page" cardClassName="role-card" maxWidth={1000}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
-      <div className="card" style={{ maxWidth: 1000 }}>
-        <div className="legacy-header">
-          <div>
-            <h1>{title}</h1>
-            <p>{session ? "Signed in as " + session.user : "Loading session..."}</p>
-          </div>
-          <div className="legacy-actions">
-            <button type="button" onClick={() => router.push("/user-portal")}>Back to Role Select</button>
-          </div>
-        </div>
+      <PanelHeader
+        title={title}
+        subtitle={session ? "Signed in as " + session.user : "Loading session..."}
+        actions={<button type="button" onClick={() => router.push("/user-portal")}>Back to Role Select</button>}
+      />
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          <div className="rchip">Status: <strong>{statusText}</strong></div>
-          <div className="rchip">Network: <strong>{isOnline ? "Online" : "Offline"}</strong></div>
-          <div className="rchip">V2V Range: <strong>{v2vRange}m</strong></div>
-          <div className="rchip">V2I Range: <strong>{v2iRange}m</strong></div>
-          <div className="rchip">Last Sync: <strong>{lastSyncAt || "-"}</strong></div>
-          <div className="rchip">GPS Confidence: <strong>{Math.round((gpsReport.confidence || 0) * 100)}%</strong></div>
-          <div className="rchip">Rejected Spikes: <strong>{gpsReport.outliersRejected || 0}</strong></div>
-        </div>
+      <ChipRow className="chip-grid mt-14">
+        <div className="rchip metric-chip"><span className="metric-label">Status</span><strong>{statusText}</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">Network</span><strong>{isOnline ? "Online" : "Offline"}</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">V2V Range</span><strong>{v2vRange}m</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">V2I Range</span><strong>{v2iRange}m</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">Last Sync</span><strong>{lastSyncAt || "-"}</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">GPS Confidence</span><strong>{Math.round((gpsReport.confidence || 0) * 100)}%</strong></div>
+        <div className="rchip metric-chip"><span className="metric-label">Rejected Spikes</span><strong>{gpsReport.outliersRejected || 0}</strong></div>
+      </ChipRow>
 
-        {position && (
-          <div className="routes" style={{ marginTop: 14 }}>
-            <div className="rchip">Lat: <strong>{Number(position.lat).toFixed(6)}</strong></div>
-            <div className="rchip">Lng: <strong>{Number(position.lng).toFixed(6)}</strong></div>
-            <div className="rchip">Accuracy: <strong>{Math.round(position.accuracy || 0)}m</strong></div>
-            <div className="rchip">Speed: <strong>{Number(position.speed || 0).toFixed(1)} m/s</strong></div>
-          </div>
-        )}
+      {!isOnline && <StatusMessage>Offline mode active. Position updates are queued and will flush on reconnect.</StatusMessage>}
 
-        {isEmergency && (
-          <div className="routes" style={{ marginTop: 14 }}>
-            <label className="rchip">
-              Vehicle Type
-              <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} style={{ marginLeft: 8 }}>
-                <option value="ambulance">Ambulance</option>
-                <option value="fire">Fire</option>
-                <option value="police">Police</option>
-              </select>
-            </label>
-            <div className="rchip">
-              Distance to Signal: <strong>{distToSignal === null ? "-" : distToSignal + "m"}</strong>
-            </div>
-          </div>
-        )}
+      {position && (
+        <ChipRow className="chip-grid mt-14">
+          <div className="rchip metric-chip"><span className="metric-label">Latitude</span><strong>{Number(position.lat).toFixed(6)}</strong></div>
+          <div className="rchip metric-chip"><span className="metric-label">Longitude</span><strong>{Number(position.lng).toFixed(6)}</strong></div>
+          <div className="rchip metric-chip"><span className="metric-label">Accuracy</span><strong>{Math.round(position.accuracy || 0)}m</strong></div>
+          <div className="rchip metric-chip"><span className="metric-label">Speed</span><strong>{Number(position.speed || 0).toFixed(1)} m/s</strong></div>
+        </ChipRow>
+      )}
 
-        {!isEmergency && !isSignal && (
-          <div className="routes" style={{ marginTop: 14 }}>
-            <div className="rchip">
-              Emergency Distance: <strong>{distToEmergency === null ? "-" : distToEmergency + "m"}</strong>
-            </div>
-            <div className="rchip">
-              Yield Guidance: <strong>{yieldSide || "-"}</strong>
-            </div>
-            <div className={"rchip " + (danger ? "rchip-danger" : "") }>
-              Alert: <strong>{danger ? "YIELD NOW" : "Clear"}</strong>
-            </div>
-          </div>
-        )}
+      {isEmergency && (
+        <ChipRow className="chip-grid mt-14">
+          <label className="rchip role-select metric-chip">
+            <span className="metric-label">Vehicle Type</span>
+            <select className="role-select-field" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
+              <option value="ambulance">Ambulance</option>
+              <option value="fire">Fire</option>
+              <option value="police">Police</option>
+            </select>
+          </label>
+          <div className="rchip metric-chip"><span className="metric-label">Distance to Signal</span><strong>{distToSignal === null ? "-" : distToSignal + "m"}</strong></div>
+        </ChipRow>
+      )}
 
-        {isSignal && (
-          <div className="routes" style={{ marginTop: 14 }}>
-            <div className="rchip">
-              EV Proximity: <strong>{preempt ? "Within V2I Range" : "No EV in range"}</strong>
-            </div>
+      {!isEmergency && !isSignal && (
+        <TableCard>
+          <ChipRow className="chip-grid mt-14">
+            <div className="rchip metric-chip"><span className="metric-label">Emergency Distance</span><strong>{distToEmergency === null ? "-" : distToEmergency + "m"}</strong></div>
+            <div className="rchip metric-chip"><span className="metric-label">Yield Guidance</span><strong>{yieldSide || "-"}</strong></div>
+            <div className={"rchip metric-chip " + (danger ? "rchip-danger" : "") }><span className="metric-label">Alert</span><strong>{danger ? "YIELD NOW" : "Clear"}</strong></div>
+          </ChipRow>
+        </TableCard>
+      )}
+
+      {isSignal && (
+        <TableCard>
+          <ChipRow className="chip-grid mt-14">
+            <div className="rchip metric-chip"><span className="metric-label">EV Proximity</span><strong>{preempt ? "Within V2I Range" : "No EV in range"}</strong></div>
             <div className="legacy-actions">
               <button type="button" onClick={() => updateSignalState("RED")}>Set RED</button>
               <button type="button" onClick={() => updateSignalState("YELLOW")}>Set YELLOW</button>
               <button type="button" onClick={() => updateSignalState("GREEN")}>Set GREEN</button>
             </div>
-            <div className="rchip">Current Signal State: <strong>{signalState}</strong></div>
-          </div>
-        )}
-      </div>
-    </main>
+            <div className="rchip metric-chip"><span className="metric-label">Current Signal State</span><strong>{signalState}</strong></div>
+          </ChipRow>
+        </TableCard>
+      )}
+    </PageShell>
   );
 }

@@ -44,13 +44,13 @@ export default function AdminPreviewPage() {
         <h1>Admin Preview</h1>
         <p>Public live overview of V2X system activity.</p>
 
-        <div className="routes" style={{ marginTop: 14 }}>
+        <div className="routes mt-14">
           <div className="rchip">Users: <strong>{stats.users}</strong></div>
           <div className="rchip">Admins: <strong>{stats.admins}</strong></div>
           <div className="rchip">Events: <strong>{stats.events}</strong></div>
         </div>
 
-        <div className="legacy-actions" style={{ marginTop: 14 }}>
+        <div className="legacy-actions mt-14">
           <Link href="/login">Sign In</Link>
           <Link href="/admin">Open Admin</Link>
         </div>
