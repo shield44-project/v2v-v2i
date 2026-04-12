@@ -66,6 +66,9 @@ export default async function Home() {
               Sign in
             </Link>
           )}
+          <Link className="btn-secondary" href="/legacy/index.html">
+            Open Legacy Suite
+          </Link>
         </div>
         <div className="mt-8 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
           <strong>Status:</strong>{" "}
