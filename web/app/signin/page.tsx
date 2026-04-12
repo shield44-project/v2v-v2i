@@ -3,10 +3,17 @@ import { redirect } from "next/navigation";
 
 export default async function SignInPage() {
   const session = await auth();
+  const hasGoogleClientId = Boolean(
+    process.env.AUTH_GOOGLE_ID ||
+      process.env.GOOGLE_CLIENT_ID ||
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+  );
+  const hasGoogleClientSecret = Boolean(
+    process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET,
+  );
+  const hasAuthSecret = Boolean(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET);
   const isGoogleConfigured = Boolean(
-    process.env.AUTH_GOOGLE_ID &&
-      process.env.AUTH_GOOGLE_SECRET &&
-      process.env.AUTH_SECRET,
+    hasGoogleClientId && hasGoogleClientSecret && hasAuthSecret,
   );
 
   if (session?.user) {
@@ -23,8 +30,9 @@ export default async function SignInPage() {
         </p>
         {!isGoogleConfigured && (
           <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-            Configure AUTH_SECRET, AUTH_GOOGLE_ID, and AUTH_GOOGLE_SECRET in
-            environment variables before signing in.
+            Configure Google OAuth and auth secrets in Vercel before signing in:
+            AUTH_GOOGLE_ID (or GOOGLE_CLIENT_ID), AUTH_GOOGLE_SECRET (or
+            GOOGLE_CLIENT_SECRET), and AUTH_SECRET (or NEXTAUTH_SECRET).
           </p>
         )}
         <form
