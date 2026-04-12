@@ -74,3 +74,6 @@ The actively deployed website is the Next.js app in `./web`.
 
 For current map work tracking and next map implementation steps, use:
 - `MAPS_TODO.md`
+
+For a full ADMIN_GUIDE-style setup on Vercel (without Firebase), use:
+- `VERCEL_ADMIN_GUIDE.md`
