@@ -23,23 +23,18 @@ Firebase auth/runtime files have been removed from the active app path.
    - Client Secret
 
 ### B. Set environment variables
-In `./web`, create `.env.local` from `.env.example`:
+In `./web`, create `.env.local` manually and add:
 
-```bash
-cp .env.example .env.local
-```
-
-Fill:
-- `AUTH_SECRET` (strong random string)
-- `AUTH_GOOGLE_ID`
-- `AUTH_GOOGLE_SECRET`
+- `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
+- `AUTH_GOOGLE_ID` (or `GOOGLE_CLIENT_ID`)
+- `AUTH_GOOGLE_SECRET` (or `GOOGLE_CLIENT_SECRET`)
 - `NEXTAUTH_URL` (`http://localhost:3000` locally)
 
 ### C. Configure Vercel project variables
 In Vercel Project Settings → Environment Variables, add:
-- `AUTH_SECRET`
-- `AUTH_GOOGLE_ID`
-- `AUTH_GOOGLE_SECRET`
+- `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
+- `AUTH_GOOGLE_ID` (or `GOOGLE_CLIENT_ID`)
+- `AUTH_GOOGLE_SECRET` (or `GOOGLE_CLIENT_SECRET`)
 - `NEXTAUTH_URL=https://<your-vercel-domain>`
 
 ## 2) Local run
@@ -62,7 +57,7 @@ Open `http://localhost:3000`.
 
 ## 4) Security baseline included
 
-- Route protection middleware for `/dashboard`.
+- Server-side route protection in `app/dashboard/page.tsx` (`auth()` + redirect) and signed-in redirect logic in `app/signin/page.tsx`.
 - Encrypted Auth.js sessions (JWT strategy).
 - Security headers via Next config:
   - `X-Frame-Options: DENY`
