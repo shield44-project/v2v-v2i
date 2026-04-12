@@ -49,8 +49,10 @@ In Vercel Project → Settings → Environment Variables, add:
 - `AUTH_SECRET` (generate strong random 32+ byte secret)
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
-- `NEXTAUTH_URL=https://<your-vercel-domain>`
+- `AUTH_URL=https://<your-vercel-domain>` (preferred for Auth.js v5)
+- `NEXTAUTH_URL=https://<your-vercel-domain>` (legacy compatibility)
 - `SUPER_ADMIN_EMAIL=kstejas2718@gmail.com`
+- `NEXT_PUBLIC_SUPPORT_EMAIL=kstejas2718@gmail.com`
 
 For local `.env.local` in `web/` add same keys with localhost URL.
 
@@ -205,7 +207,15 @@ For minimal change, start with polling and move to SSE later.
 
 ---
 
-## 11) Deployment checklist
+## 11) Support issue email intake
+
+- The app includes a global **Report Issue** button.
+- It opens a prefilled email to `NEXT_PUBLIC_SUPPORT_EMAIL`.
+- The email body includes path, UTC time, and browser details to help triage breakages quickly.
+
+---
+
+## 12) Deployment checklist
 
 - [ ] Vercel project created with root directory = `web`
 - [ ] Google OAuth redirect URL added for production domain
@@ -220,7 +230,7 @@ For minimal change, start with polling and move to SSE later.
 
 ---
 
-## 12) Troubleshooting
+## 13) Troubleshooting
 
 ### `Missing auth secret`
 - Set `AUTH_SECRET` in Vercel and local `.env.local`.
@@ -240,7 +250,7 @@ For minimal change, start with polling and move to SSE later.
 
 ---
 
-## 13) Recommended next implementation files
+## 14) Recommended next implementation files
 
 Create these in `web/`:
 
@@ -253,7 +263,7 @@ Create these in `web/`:
 
 ---
 
-## 14) Summary
+## 15) Summary
 
 You can fully replace Firebase admin management with Vercel by:
 1) keeping Auth.js for sign-in,

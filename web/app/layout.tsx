@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SupportIssueMailButton from "@/app/_components/support-issue-mail-button";
 
 export const metadata: Metadata = {
   title: "V2X Connect",
@@ -19,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <SupportIssueMailButton />
+      </body>
     </html>
   );
 }

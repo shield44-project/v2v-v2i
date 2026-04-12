@@ -198,11 +198,8 @@ Firebase /v4/
 ## 🎨 Customization
 
 ### Change Super Admin Email
-**File:** `firebase-config.js`
-```javascript
-const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
-// Change to your email ↑
-```
+Set `SUPER_ADMIN_EMAIL` in your deployment/server environment (and local env file).
+For this project, use `SUPER_ADMIN_EMAIL=kstejas2718@gmail.com`.
 
 ### Change Demo Credentials
 **File:** `firebase-config.js`

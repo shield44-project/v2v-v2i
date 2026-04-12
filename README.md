@@ -28,14 +28,18 @@ In `./web`, create `.env.local` manually and add:
 - `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
 - `AUTH_GOOGLE_ID` (or `GOOGLE_CLIENT_ID`)
 - `AUTH_GOOGLE_SECRET` (or `GOOGLE_CLIENT_SECRET`)
-- `NEXTAUTH_URL` (`http://localhost:3000` locally)
+- `AUTH_URL` (`http://localhost:3000` locally, preferred)
+- `NEXTAUTH_URL` (`http://localhost:3000` locally, legacy compatibility)
+- `NEXT_PUBLIC_SUPPORT_EMAIL` (email that receives "Report Issue" messages)
 
 ### C. Configure Vercel project variables
 In Vercel Project Settings → Environment Variables, add:
 - `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
 - `AUTH_GOOGLE_ID` (or `GOOGLE_CLIENT_ID`)
 - `AUTH_GOOGLE_SECRET` (or `GOOGLE_CLIENT_SECRET`)
-- `NEXTAUTH_URL=https://<your-vercel-domain>`
+- `AUTH_URL=https://<your-vercel-domain>` (preferred)
+- `NEXTAUTH_URL=https://<your-vercel-domain>` (legacy compatibility)
+- `NEXT_PUBLIC_SUPPORT_EMAIL=<your-support-email>`
 
 ## 2) Local run
 
@@ -77,3 +81,9 @@ For current map work tracking and next map implementation steps, use:
 
 For a full ADMIN_GUIDE-style setup on Vercel (without Firebase), use:
 - `VERCEL_ADMIN_GUIDE.md`
+
+## 6) Support issue email flow
+
+- A global **Report Issue** button is shown in the app.
+- Clicking it opens a prefilled email with page path, timestamp, and browser context.
+- Configure recipient with `NEXT_PUBLIC_SUPPORT_EMAIL` (required to enable the button).
