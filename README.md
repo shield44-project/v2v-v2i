@@ -17,6 +17,7 @@ Firebase auth/runtime files have been removed from the active app path.
 3. Add these authorized redirect URIs:
    - `http://localhost:3000/api/auth/callback/google`
    - `https://<your-vercel-domain>/api/auth/callback/google`
+   - This callback path is handled automatically by Auth.js in this project.
 4. Copy:
    - Client ID
    - Client Secret
