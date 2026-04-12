@@ -28,9 +28,9 @@ export default async function Home() {
       <header className="mb-10 flex items-center justify-between border-b border-slate-800 pb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">V2X Connect</p>
-          <h1 className="mt-2 text-xl font-bold text-white sm:text-2xl">
+          <h2 className="mt-2 text-xl font-bold text-white sm:text-2xl">
             Emergency Vehicle Clearance System
-          </h1>
+          </h2>
         </div>
         <div className="flex items-center gap-3">
           {session?.user ? (
@@ -49,9 +49,9 @@ export default async function Home() {
         <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">
           Real-time V2V · V2I · GPS
         </p>
-        <h2 className="mt-3 text-3xl font-bold text-white sm:text-5xl">
+        <h1 className="mt-3 text-3xl font-bold text-white sm:text-5xl">
           Main Platform Index
-        </h2>
+        </h1>
         <p className="mt-4 max-w-3xl text-slate-300">
           Monitor emergency operations, route coordination, and authenticated
           access from one main website entry point.

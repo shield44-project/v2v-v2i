@@ -30,9 +30,10 @@ export default async function SignInPage() {
         </p>
         {!isGoogleConfigured && (
           <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-            Configure Google OAuth and auth secrets in Vercel before signing in:
+            Configure Google OAuth and auth secrets before signing in:
             AUTH_GOOGLE_ID (or GOOGLE_CLIENT_ID), AUTH_GOOGLE_SECRET (or
-            GOOGLE_CLIENT_SECRET), and AUTH_SECRET (or NEXTAUTH_SECRET).
+            GOOGLE_CLIENT_SECRET), and AUTH_SECRET (or NEXTAUTH_SECRET), in
+            your deployment or local environment.
           </p>
         )}
         <form
