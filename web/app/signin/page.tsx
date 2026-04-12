@@ -22,10 +22,10 @@ export default async function SignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-6">
-      <section className="w-full rounded-2xl border border-white/10 bg-slate-950/70 p-8 text-center shadow-2xl backdrop-blur">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">Secure Access</p>
-        <h1 className="mt-3 text-3xl font-bold text-white">Sign in to V2X Connect</h1>
-        <p className="mt-3 text-slate-300">
+      <section className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Secure Access</p>
+        <h1 className="mt-3 text-3xl font-bold text-zinc-100">Sign in to V2X Connect</h1>
+        <p className="mt-3 text-zinc-300">
           Use your Google account. Sessions are encrypted and protected by Auth.js.
         </p>
         {!isGoogleConfigured && (
