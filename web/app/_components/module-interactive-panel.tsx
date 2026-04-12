@@ -100,6 +100,20 @@ function buildMapSrc(layer: MapLayer, lat: number, lng: number): string {
   return `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
 }
 
+/** Returns a CSS class name for an accuracy value (lower = better). */
+function accuracyClass(accuracy: number): string {
+  if (accuracy < 6) return "acc-good";
+  if (accuracy < 12) return "acc-medium";
+  return "acc-bad";
+}
+
+/** Returns a CSS class name for a confidence percentage (higher = better). */
+function confidenceClass(confidence: number): string {
+  if (confidence > 90) return "conf-good";
+  if (confidence > 80) return "conf-medium";
+  return "conf-bad";
+}
+
 /**
  * Renders functional GPS, dashboard, and map controls for module pages.
  */
@@ -173,9 +187,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       geoWatchRef.current = null;
     }
 
-    if (!mountedRef.current) {
-      return;
-    }
+    if (!mountedRef.current) return;
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -234,16 +246,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             Math.min(22, unit.accuracy + drift(t * 0.28, 0.4)),
           );
 
-          return {
-            ...unit,
-            lat,
-            lng,
-            speed,
-            bearing,
-            confidence,
-            accuracy,
-            gpsLock: true,
-          };
+          return { ...unit, lat, lng, speed, bearing, confidence, accuracy, gpsLock: true };
         }),
       );
     }, 1000);
@@ -266,14 +269,12 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       key: unit.id,
       module: unit.label,
       state: unit.gpsLock ? "Online" : "Offline",
-      accuracy: `${unit.accuracy.toFixed(1)}m`,
-      confidence: `${unit.confidence.toFixed(0)}%`,
+      accuracy: unit.accuracy,
+      confidence: unit.confidence,
     }));
 
     const q = search.trim().toLowerCase();
-    if (!q) {
-      return rows;
-    }
+    if (!q) return rows;
     return rows.filter((row) => row.module.toLowerCase().includes(q));
   }, [search, units]);
 
@@ -283,18 +284,22 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   const mapSrc = buildMapSrc(mapLayer, selectedUnitData.lat, selectedUnitData.lng);
 
   return (
-    <section className="mt-8 rounded-2xl border border-zinc-800 bg-black/40 p-6">
+    <section className="animate-fade-in-up mt-8 rounded-2xl border border-zinc-800 bg-black/40 p-6" style={{ animationDelay: "180ms" }}>
+      {/* panel header + tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-100">Live Module Tools</h2>
+        <div className="flex items-center gap-2">
+          <span className="gps-dot" />
+          <h2 className="text-lg font-semibold text-zinc-100">Live Module Tools</h2>
+        </div>
         <div className="flex flex-wrap gap-2">
           {TABS.map((tab) => (
             <button
               key={tab}
               type="button"
-              className={`rounded-lg border px-3 py-2 text-sm ${
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200 ${
                 activeTab === tab
-                  ? "border-zinc-300 bg-zinc-100 text-zinc-900"
-                  : "border-zinc-700 bg-zinc-900 text-zinc-200"
+                  ? "tab-active"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
               }`}
               onClick={() => setActiveTab(tab)}
             >
@@ -304,13 +309,22 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-300">
-        <p>
-          <strong>{title}</strong> · Tracker status: {trackerStatus}
+      {/* status bar */}
+      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm">
+        <p className="text-zinc-300">
+          <strong className="text-zinc-100">{title}</strong>
+          <span className="mx-2 text-zinc-700">·</span>
+          <span className="text-zinc-400">Tracker: </span>
+          <span className={trackerStatus.startsWith("GPS tracker") ? "acc-good" : "text-zinc-300"}>
+            {trackerStatus}
+          </span>
         </p>
-        <p className="mt-1">GPS status: {gpsStatus}</p>
+        <p className="mt-1 text-zinc-500">
+          GPS: <span className="text-zinc-400">{gpsStatus}</span>
+        </p>
       </div>
 
+      {/* ── overview tab ── */}
       {activeTab === "overview" && (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <button
@@ -330,41 +344,74 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         </div>
       )}
 
+      {/* ── gps tab ── */}
       {activeTab === "gps" && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {units.map((unit) => (
-            <article key={unit.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-              <h3 className="font-semibold text-zinc-100">{unit.label}</h3>
-              <p className="mt-2 text-zinc-300">
+          {units.map((unit, i) => (
+            <article
+              key={unit.id}
+              className="card-glow animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="flex items-center gap-2">
+                <span className={unit.gpsLock ? "gps-dot" : "gps-dot-offline"} />
+                <h3 className="font-semibold text-zinc-100">{unit.label}</h3>
+              </div>
+              <p className="mt-2 font-mono text-xs text-zinc-500">
                 {unit.lat.toFixed(5)}, {unit.lng.toFixed(5)}
               </p>
-              <p className="text-zinc-400">Accuracy: {unit.accuracy.toFixed(1)}m</p>
-              <p className="text-zinc-400">Confidence: {unit.confidence.toFixed(0)}%</p>
-              <p className="text-zinc-400">Speed: {unit.speed.toFixed(1)} m/s</p>
+              <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
+                <span className="text-zinc-500">Accuracy</span>
+                <span className={`text-right font-mono font-semibold ${accuracyClass(unit.accuracy)}`}>
+                  {unit.accuracy.toFixed(1)} m
+                </span>
+                <span className="text-zinc-500">Confidence</span>
+                <span className={`text-right font-mono font-semibold ${confidenceClass(unit.confidence)}`}>
+                  {unit.confidence.toFixed(0)} %
+                </span>
+                <span className="text-zinc-500">Speed</span>
+                <span className="text-right font-mono text-zinc-300">
+                  {unit.speed.toFixed(1)} m/s
+                </span>
+                <span className="text-zinc-500">Bearing</span>
+                <span className="text-right font-mono text-zinc-300">
+                  {unit.bearing.toFixed(0)}°
+                </span>
+              </div>
             </article>
           ))}
         </div>
       )}
 
+      {/* ── dashboard tab ── */}
       {activeTab === "dashboard" && (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <article className="animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <h3 className="font-semibold text-zinc-100">Accuracy Snapshot</h3>
-            <p className="mt-2 text-zinc-300">Average accuracy: {averageAccuracy}m</p>
-            <p className="text-zinc-400">Units with GPS lock: {units.filter((u) => u.gpsLock).length}/4</p>
-            <p className="text-zinc-400">Real-time feed interval: 1s</p>
+            <p className="mt-3 text-2xl font-bold font-mono">
+              <span className={accuracyClass(parseFloat(averageAccuracy))}>{averageAccuracy} m</span>
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">average across all units</p>
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <span className="gps-dot" />
+              <span className="text-zinc-300">
+                {units.filter((u) => u.gpsLock).length}/4 units locked
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-zinc-600">Feed interval: 1 s</p>
           </article>
-          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-            <h3 className="font-semibold text-zinc-100">Interactive Controls</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+
+          <article className="animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4" style={{ animationDelay: "60ms" }}>
+            <h3 className="font-semibold text-zinc-100">Unit Focus</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
               {units.map((unit) => (
                 <button
                   key={unit.id}
                   type="button"
-                  className={`rounded-md border px-3 py-1 text-sm ${
+                  className={`rounded-md border px-3 py-1 text-sm transition-all duration-200 ${
                     selectedUnit === unit.id
-                      ? "border-zinc-300 bg-zinc-100 text-zinc-900"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-200"
+                      ? "tab-active"
+                      : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
                   }`}
                   onClick={() => setSelectedUnit(unit.id)}
                 >
@@ -372,48 +419,58 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 </button>
               ))}
             </div>
+            {selectedUnitData && (
+              <div className="mt-3 text-xs text-zinc-500 font-mono">
+                <p>{selectedUnitData.lat.toFixed(5)}, {selectedUnitData.lng.toFixed(5)}</p>
+                <p className="mt-1">
+                  <span className={accuracyClass(selectedUnitData.accuracy)}>
+                    ±{selectedUnitData.accuracy.toFixed(1)} m
+                  </span>
+                  {" · "}
+                  <span className={confidenceClass(selectedUnitData.confidence)}>
+                    {selectedUnitData.confidence.toFixed(0)} % conf
+                  </span>
+                </p>
+              </div>
+            )}
           </article>
         </div>
       )}
 
+      {/* ── map tab ── */}
       {activeTab === "map" && (
-        <div className="mt-4">
+        <div className="mt-4 animate-fade-in">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={`rounded-md border px-3 py-1 text-sm ${
-                mapLayer === "street"
-                  ? "border-zinc-300 bg-zinc-100 text-zinc-900"
-                  : "border-zinc-700 bg-zinc-900 text-zinc-200"
-              }`}
-              onClick={() => setMapLayer("street")}
-            >
-              Street
-            </button>
-            <button
-              type="button"
-              className={`rounded-md border px-3 py-1 text-sm ${
-                mapLayer === "satellite"
-                  ? "border-zinc-300 bg-zinc-100 text-zinc-900"
-                  : "border-zinc-700 bg-zinc-900 text-zinc-200"
-              }`}
-              onClick={() => setMapLayer("satellite")}
-            >
-              Satellite
-            </button>
-            <span className="text-sm text-zinc-400">
-              Showing {selectedUnitData.label} · {selectedUnitData.lat.toFixed(4)},{" "}
-              {selectedUnitData.lng.toFixed(4)}
-            </span>
+            {(["street", "satellite"] as MapLayer[]).map((layer) => (
+              <button
+                key={layer}
+                type="button"
+                className={`rounded-md border px-3 py-1 text-sm capitalize transition-all duration-200 ${
+                  mapLayer === layer
+                    ? "tab-active"
+                    : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                }`}
+                onClick={() => setMapLayer(layer)}
+              >
+                {layer}
+              </button>
+            ))}
+            <div className="flex items-center gap-1 text-sm text-zinc-500">
+              <span className="gps-dot" style={{ width: 6, height: 6 }} />
+              {selectedUnitData.label}
+              <span className="font-mono text-xs text-zinc-600 ml-1">
+                {selectedUnitData.lat.toFixed(4)}, {selectedUnitData.lng.toFixed(4)}
+              </span>
+            </div>
           </div>
-          <div className="overflow-hidden rounded-xl border border-zinc-800">
+          <div className="overflow-hidden rounded-xl border border-zinc-800" style={{ boxShadow: "0 0 32px rgba(0,229,255,0.05)" }}>
             <iframe
               key={`${mapLayer}-${selectedUnitData.id}`}
               src={mapSrc}
               width="100%"
               height="380"
               loading="lazy"
-              className="block transition-opacity duration-300"
+              className="block"
               title="Live map"
               referrerPolicy="no-referrer-when-downgrade"
             />
@@ -421,24 +478,28 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         </div>
       )}
 
+      {/* ── admin review ── */}
       {isAdminReviewModule && (
-        <section className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-          <h3 className="text-base font-semibold text-zinc-100">Admin Review</h3>
-          <p className="mt-1 text-sm text-zinc-400">
+        <section className="animate-fade-in-up mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4" style={{ animationDelay: "120ms" }}>
+          <div className="flex items-center gap-2">
+            <span className="gps-dot" />
+            <h3 className="text-base font-semibold text-zinc-100">Admin Review</h3>
+          </div>
+          <p className="mt-1 text-sm text-zinc-500">
             Read-only operational review panel for all tracked modules.
           </p>
           <input
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="mt-3 w-full rounded-lg border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-400"
+            className="mt-3 w-full rounded-lg border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-cyan-500/50 focus:shadow-[0_0_10px_rgba(0,229,255,0.1)]"
             placeholder="Filter by module name"
             aria-label="Filter module rows"
           />
           <div className="mt-3 overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="text-zinc-400">
+                <tr className="text-zinc-500">
                   <th className="border-b border-zinc-800 px-2 py-2">Module</th>
                   <th className="border-b border-zinc-800 px-2 py-2">State</th>
                   <th className="border-b border-zinc-800 px-2 py-2">Accuracy</th>
@@ -447,11 +508,25 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               </thead>
               <tbody>
                 {filteredAdminRows.map((row) => (
-                  <tr key={row.key} className="text-zinc-200">
-                    <td className="border-b border-zinc-900 px-2 py-2">{row.module}</td>
-                    <td className="border-b border-zinc-900 px-2 py-2">{row.state}</td>
-                    <td className="border-b border-zinc-900 px-2 py-2">{row.accuracy}</td>
-                    <td className="border-b border-zinc-900 px-2 py-2">{row.confidence}</td>
+                  <tr
+                    key={row.key}
+                    className="border-b border-zinc-900 transition hover:bg-zinc-900/50"
+                  >
+                    <td className="px-2 py-2 text-zinc-200">{row.module}</td>
+                    <td className="px-2 py-2">
+                      <span className="flex items-center gap-1.5">
+                        <span className={row.state === "Online" ? "gps-dot" : "gps-dot-offline"} style={{ width: 6, height: 6 }} />
+                        <span className={row.state === "Online" ? "acc-good" : "text-zinc-500"}>
+                          {row.state}
+                        </span>
+                      </span>
+                    </td>
+                    <td className={`px-2 py-2 font-mono ${accuracyClass(row.accuracy)}`}>
+                      {row.accuracy.toFixed(1)} m
+                    </td>
+                    <td className={`px-2 py-2 font-mono ${confidenceClass(row.confidence)}`}>
+                      {row.confidence.toFixed(0)} %
+                    </td>
                   </tr>
                 ))}
               </tbody>
