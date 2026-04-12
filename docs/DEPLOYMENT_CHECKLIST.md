@@ -23,16 +23,16 @@
 - [x] `IMPROVEMENTS_SUMMARY.md` - Feature overview & metrics
 
 ### Modified Files
-- [x] `control.html` - Added 4 script imports + GPS dashboard styles
+- [x] `/control` - Added 4 script imports + GPS dashboard styles
 
 ### Unchanged Files (Verified Compatibility)
 - [x] `firebase-config.js` (no changes)
-- [x] `login.html` (no changes)
-- [x] `admin.html` (no changes)
-- [x] `emergency.html` (no changes)
-- [x] `vehicle1.html` (no changes)
-- [x] `vehicle2.html` (no changes)
-- [x] `signal.html` (no changes)
+- [x] `/login` (no changes)
+- [x] `/admin` (no changes)
+- [x] `/emergency` (no changes)
+- [x] `/vehicle1` (no changes)
+- [x] `/vehicle2` (no changes)
+- [x] `/signal` (no changes)
 - [x] All admin files (no changes)
 
 ---
@@ -50,7 +50,7 @@ ls -l gps-tracking.js map-config.js gps-dashboard.js gps-map-integration.js
 ### Step 2: Browser Verification (Chrome/Firefox)
 
 **Test 1: Control Center Opens**
-1. Open `control.html` in browser
+1. Open `/control` in browser
 2. Log in as admin (or use demo: admin/V2X@2024)
 3. ✅ Page should load without errors
 4. ✅ Check browser console (F12) - no red errors
@@ -70,9 +70,9 @@ ls -l gps-tracking.js map-config.js gps-dashboard.js gps-map-integration.js
 6. ✅ Map should switch back to dark street map
 
 **Test 4: GPS Data Flows**
-1. Open `vehicle1.html` (or emergency.html) in another tab
+1. Open `/vehicle1` (or /emergency) in another tab
 2. Allow location permission when asked
-3. Go back to control.html
+3. Go back to /control
 4. In GPS dashboard, watch the Unit Cards
 5. ✅ Data should start populating after 10-15 seconds
 6. ✅ Accuracy values should be <20m
@@ -131,8 +131,8 @@ console.log(V2XEnhanced.dashboard);
 ### Step 5: Firebase Verification
 
 **Real-time Data Test:**
-1. Open vehicle1.html → activate it
-2. Watch Control.html GPS dashboard
+1. Open /vehicle1 → activate it
+2. Watch /control GPS dashboard
 3. ✅ Accuracy should decrease (getting GPS lock)
 4. ✅ Confidence should increase
 5. ✅ Particle spread should decrease
@@ -219,15 +219,15 @@ console.log(V2XEnhanced.dashboard);
 
 ### Issue: GPS dashboard shows no data
 **Debug Steps:**
-1. Check vehicle pages active: Open vehicle1.html, allow location
+1. Check vehicle pages active: Open /vehicle1, allow location
 2. Check Firebase listeners: `console.log(DB)`
 3. Verify tracker state: `console.log(V2XEnhanced.trackers.vehicle1.state)`
 4. **Solution:** Vehicles must be sending GPS first (wait 10-15 seconds)
 
 ### Issue: Console errors about modules
 **Debug Steps:**
-1. Check file paths in control.html are correct
-2. Verify .js files are in same folder as control.html
+1. Check file paths in /control are correct
+2. Verify .js files are in same folder as /control
 3. Check browser console for 404 errors
 4. **Solution:** Place all .js files in project root folder
 
@@ -293,7 +293,7 @@ Object.values(V2XEnhanced.trackers).forEach(t => {
 ## ✨ Sign-Off Checklist
 
 - [ ] All 4 new modules created and verified
-- [ ] control.html successfully updated with script imports
+- [ ] /control successfully updated with script imports
 - [ ] Browser opens without console errors
 - [ ] GPS tab appears in control panel
 - [ ] Satellite map toggle button visible

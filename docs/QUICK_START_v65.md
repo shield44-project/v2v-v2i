@@ -10,7 +10,7 @@ npm run dev
 ```
 
 Open `http://localhost:3000` and use route paths such as `/control` or `/login`.
-Legacy direct pages are still available as `/index.html`, `/control.html`, etc.
+Legacy direct pages are still available as `/`, `/control`, etc.
 
 ## 🚀 What's New?
 
@@ -38,7 +38,7 @@ Your emergency vehicle tracking system now has **3 major upgrades**:
 
 ## 📖 USER GUIDES BY ROLE
 
-### 👥 For Civilian Vehicle Drivers (vehicle1.html / vehicle2.html)
+### 👥 For Civilian Vehicle Drivers (/vehicle1 / /vehicle2)
 **What changed for you?** ✅ Nothing! Just works better.
 - GPS smoothing is automatic (background)
 - Your phone's location is processed more accurately
@@ -53,7 +53,7 @@ Your emergency vehicle tracking system now has **3 major upgrades**:
 
 ---
 
-### 🚨 For Emergency Vehicle Operators (emergency.html)
+### 🚨 For Emergency Vehicle Operators (/emergency)
 **What changed for you?** ✅ GPS is smoother!
 - Your position updates more cleanly on the map
 - Accuracy badge (Kalman) is more reliable
@@ -68,11 +68,11 @@ Your emergency vehicle tracking system now has **3 major upgrades**:
 
 ---
 
-### 🎛️ For Admin Control Center Operators (control.html)
+### 🎛️ For Admin Control Center Operators (/control)
 **What changed for you?** ✨ THREE NEW FEATURES!
 
 #### Feature 1: **NEW GPS Accuracy Tab** 📡
-1. Open Control Center (`control.html`)
+1. Open Control Center (`/control`)
 2. Look at the tabs on the left: Units | Log | Stats | Users | Admin | **GPS** ← NEW!
 3. Click **"📡 GPS"** tab
 4. See live accuracy for each vehicle
@@ -113,11 +113,11 @@ Speed: 2.3 m/s = ~8 km/h (normal traffic)
 ## 🎬 QUICK DEMO (30 seconds)
 
 ### See GPS Dashboard in Action:
-1. Open `control.html` (log in if needed)
-2. Open `vehicle1.html` in another tab/window
+1. Open `/control` (log in if needed)
+2. Open `/vehicle1` in another tab/window
 3. Click "Allow" for location permission
 4. Wait 10-15 seconds for GPS lock
-5. Go back to control.html
+5. Go back to /control
 6. Click the **"📡 GPS"** tab
 7. ✅ Watch the card populate with live data!
 
@@ -253,7 +253,7 @@ Used for: ETA calculation, route planning
 
 ## 📋 CHECKLIST: Is Everything Working?
 
-- [ ] Control Center opens (control.html)
+- [ ] Control Center opens (/control)
 - [ ] Can log in
 - [ ] "📡 GPS" tab visible in left panel
 - [ ] "🛰️ Satellite" button visible in map

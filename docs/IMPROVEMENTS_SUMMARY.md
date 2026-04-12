@@ -198,17 +198,17 @@ tracker.predictPosition(seconds)    // Dead reckoning
 
 | File | Changes | Impact |
 |---|---|---|
-| `control.html` | Added 4 script imports + GPS dashboard styles (50 lines) | ✅ Backward compatible |
-| `control.html <title>` | Updated to v6.5 | ✅ Version bump |
+| `/control` | Added 4 script imports + GPS dashboard styles (50 lines) | ✅ Backward compatible |
+| `/control <title>` | Updated to v6.5 | ✅ Version bump |
 
 ### UNCHANGED Existing Files (100% Compatible)
 - ✅ `firebase-config.js` (no changes needed)
-- ✅ `login.html` (no changes needed)
-- ✅ `admin.html` (no changes needed)
-- ✅ `emergency.html` (no changes needed)
-- ✅ `vehicle1.html` (no changes needed)
-- ✅ `vehicle2.html` (no changes needed)
-- ✅ `signal.html` (no changes needed)
+- ✅ `/login` (no changes needed)
+- ✅ `/admin` (no changes needed)
+- ✅ `/emergency` (no changes needed)
+- ✅ `/vehicle1` (no changes needed)
+- ✅ `/vehicle2` (no changes needed)
+- ✅ `/signal` (no changes needed)
 - ✅ `intersection-widget.js` (no changes needed)
 - ✅ `admin-management.js` (no changes needed)
 - ✅ All other admin/utility files (no changes needed)
@@ -451,20 +451,20 @@ GPS_SATELLITE_GUIDE.md:
 3. No environment variables needed (uses existing config)
 
 4. Test immediately:
-   - Open control.html
+   - Open /control
    - Check for new "📡 GPS" tab
    - Click "🛰️ Satellite" button
    - Should see satellite map
    - GPS metrics should populate
 
 5. Verify in vehicles:
-   - Open vehicle1.html
+   - Open /vehicle1
    - Check browser console (no errors)
    - GPS tracking should work silently
    - No visible changes (new system is background)
 
 ### Rollback (if needed)
-1. Remove 4 new script lines from control.html
+1. Remove 4 new script lines from /control
 2. Delete 4 new .js files
 3. Refresh page
 4. v6.0 behavior restored 100%

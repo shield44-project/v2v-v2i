@@ -242,7 +242,7 @@ window.googleHybridLayer = L.tileLayer(
 ## 📊 Part 3: GPS Accuracy Dashboard
 
 ### Location and Access
-1. Open **V2X Control Center** (control.html)
+1. Open **V2X Control Center** (/control)
 2. Click **"📡 GPS"** tab in the control panel (new)
 3. Real-time accuracy metrics appear
 
@@ -331,7 +331,7 @@ Dashboard updates every 500ms. Watch for:
    - Dashboard UI integration
 
 ### Modified Files
-1. **control.html**
+1. **/control**
    - Added script references (4 new files)
    - Added GPS dashboard styles
    - Added new "📡 GPS" tab
@@ -443,10 +443,10 @@ After (v6.5):
 
 ## 📝 Deployment Checklist
 
-- [ ] Backup existing control.html
+- [ ] Backup existing /control
 - [ ] Verify all 4 new .js files added to project folder
 - [ ] Check network connection for tile layer loading
-- [ ] Test on Control Center (control.html) first
+- [ ] Test on Control Center (/control) first
 - [ ] Verify "📡 GPS" tab appears and populates
 - [ ] Test satellite layer toggle button
 - [ ] Check accuracy metrics update smoothly

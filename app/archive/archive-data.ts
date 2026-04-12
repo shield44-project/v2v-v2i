@@ -38,7 +38,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "What was preserved", body: "Route launcher cards, signal coordination copy, and the old system topology remain visible for reference." },
       { heading: "What changed", body: "The raw HTML layout was replaced with a Next.js page, shared data model, and cleaner archive copy." }
     ],
-    sourcePaths: ["archive/legacy/public-static/index.html", "archive/legacy/root-snapshot/index.html"],
+    sourcePaths: ["archive/legacy/public-static/index.md", "archive/legacy/root-snapshot/index.md"],
     ctaLabel: "Open current app",
     ctaHref: "/"
   },
@@ -57,7 +57,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Preserved behavior", body: "Google sign-in, session checking, and role-based redirects are documented in the snapshot." },
       { heading: "Archive note", body: "The demo credential path is removed from the archive source so no reusable secret remains in the page." }
     ],
-    sourcePaths: ["archive/legacy/public-static/login.html", "archive/legacy/root-snapshot/login.html"],
+    sourcePaths: ["archive/legacy/public-static/login.md", "archive/legacy/root-snapshot/login.md"],
     ctaLabel: "Open login route",
     ctaHref: "/login"
   },
@@ -76,7 +76,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Role selection", body: "Emergency vehicle, signal node, and civilian vehicle entry points remain visible as a historical route map." },
       { heading: "UI shape", body: "The portal now uses the shared archive shell rather than the old standalone HTML card system." }
     ],
-    sourcePaths: ["archive/legacy/public-static/user-portal.html", "archive/legacy/root-snapshot/user-portal.html"],
+    sourcePaths: ["archive/legacy/public-static/user-portal.md", "archive/legacy/root-snapshot/user-portal.md"],
     ctaLabel: "Open portal route",
     ctaHref: "/user-portal"
   },
@@ -95,7 +95,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Preview content", body: "The admin overview, status cards, and FAQ sections are kept as readable historical context." },
       { heading: "Cleanup", body: "Private contacts and dead archive links were removed before the page was ported to TSX." }
     ],
-    sourcePaths: ["archive/legacy/public-static/admin-preview.html", "archive/legacy/root-snapshot/admin-preview.html"],
+    sourcePaths: ["archive/legacy/public-static/admin-preview.md", "archive/legacy/root-snapshot/admin-preview.md"],
     ctaLabel: "Open preview route",
     ctaHref: "/admin-preview"
   },
@@ -114,7 +114,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "What it covered", body: "Add, promote, demote, ban, and review user accounts from a single admin surface." },
       { heading: "How it reads now", body: "The interface is documented as an archived management panel rather than a current production screen." }
     ],
-    sourcePaths: ["archive/legacy/public-static/admin.html", "archive/legacy/root-snapshot/admin.html"],
+    sourcePaths: ["archive/legacy/public-static/admin.md", "archive/legacy/root-snapshot/admin.md"],
     ctaLabel: "Open admin route",
     ctaHref: "/admin"
   },
@@ -133,7 +133,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Operational focus", body: "Unit tracking, GPS updates, signal controls, and admin-side telemetry are retained as documentation." },
       { heading: "Archive translation", body: "Live metrics and real-time labels were rewritten so the screen reads as a preserved control room rather than an active dispatch console." }
     ],
-    sourcePaths: ["archive/legacy/public-static/control.html", "archive/legacy/root-snapshot/control.html"],
+    sourcePaths: ["archive/legacy/public-static/control.md", "archive/legacy/root-snapshot/control.md"],
     ctaLabel: "Open control route",
     ctaHref: "/control"
   },
@@ -152,7 +152,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Preserved flows", body: "Mode selection, GPS acquisition, and event logging are still represented in the page content." },
       { heading: "Archive wording", body: "The page now reads as a snapshot, so it is clear the interactions are historical documentation." }
     ],
-    sourcePaths: ["archive/legacy/public-static/emergency.html", "archive/legacy/root-snapshot/emergency.html"],
+    sourcePaths: ["archive/legacy/public-static/emergency.md", "archive/legacy/root-snapshot/emergency.md"],
     ctaLabel: "Open emergency route",
     ctaHref: "/emergency"
   },
@@ -171,7 +171,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Operational summary", body: "The page reflects intersection monitoring, signal state changes, and GPS-based preemption." },
       { heading: "Design goal", body: "The TypeScript version keeps the same structure but makes it easier to maintain and style consistently." }
     ],
-    sourcePaths: ["archive/legacy/public-static/signal.html", "archive/legacy/root-snapshot/signal.html"],
+    sourcePaths: ["archive/legacy/public-static/signal.md", "archive/legacy/root-snapshot/signal.md"],
     ctaLabel: "Open signal route",
     ctaHref: "/signal"
   },
@@ -190,7 +190,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Vehicle flow", body: "The page captures how the civilian node reacted to emergency alerts and directional guidance." },
       { heading: "Archive note", body: "The legacy signals are preserved as an explanatory snapshot, not an active client." }
     ],
-    sourcePaths: ["archive/legacy/public-static/vehicle1.html", "archive/legacy/root-snapshot/vehicle1.html"],
+    sourcePaths: ["archive/legacy/public-static/vehicle1.md", "archive/legacy/root-snapshot/vehicle1.md"],
     ctaLabel: "Open vehicle 1 route",
     ctaHref: "/vehicle1"
   },
@@ -209,7 +209,7 @@ export const archivePages: ArchivePage[] = [
       { heading: "Vehicle flow", body: "The page documents the second civilian node and its proximity logic in the legacy stack." },
       { heading: "Archive note", body: "The content is preserved in TypeScript so it can be styled and maintained alongside the rest of the app." }
     ],
-    sourcePaths: ["archive/legacy/public-static/vehicle2.html", "archive/legacy/root-snapshot/vehicle2.html"],
+    sourcePaths: ["archive/legacy/public-static/vehicle2.md", "archive/legacy/root-snapshot/vehicle2.md"],
     ctaLabel: "Open vehicle 2 route",
     ctaHref: "/vehicle2"
   }

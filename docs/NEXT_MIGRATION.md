@@ -45,7 +45,7 @@ These pages reuse existing `firebase-config.js` globals for compatibility while 
 
 ## Legacy Fallback
 
-- Legacy HTML pages are still available under `public/*.html`.
+- Legacy snapshots are available under `archive/legacy/*` as `.md` files.
 - Fallback route aliases are available under `/legacy/*`.
 
 ## Why This Approach

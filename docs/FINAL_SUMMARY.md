@@ -35,14 +35,14 @@ await adminMgr.promoteUser(uid, 'user@email.com', 'Name', myUid);
 adminMgr.on('admins-updated', (e) => updateUI(adminMgr.getStats()));
 ```
 
-### 3. **`admin-preview.html`** — Public Stats Preview (288 lines)
+### 3. **`/admin-preview`** — Public Stats Preview (288 lines)
 - 👁️ **View admin system stats before login** ✨
 - 📊 **Live statistics** — total admins, users, banned, active now
 - 🟢 **System status** — Firebase connected, Google Auth active
 - 🔐 **Sign-in CTA** — One-click to full admin panel
 - 📱 **Fully responsive** — Works on all devices
 
-**Access at:** `index.html` → Click "📊 System Stats" button
+**Access at:** `/` → Click "📊 System Stats" button
 
 ### 4. **`ADMIN_GUIDE.md`** — Complete Admin Operations (500+ lines)
 - 👑 **How to add/remove admins** — Step-by-step walkthroughs
@@ -61,22 +61,22 @@ adminMgr.on('admins-updated', (e) => updateUI(adminMgr.getStats()));
 
 ## 📝 Files Updated (3 Modified)
 
-### **`index.html`**
+### **`/`**
 ```diff
 + <link rel="preconnect" href="https://fonts.googleapis.com">
 + <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-+ 📊 Button in navbar → admin-preview.html
-+ 🔐 Button in navbar → admin.html  
++ 📊 Button in navbar → /admin-preview
++ 🔐 Button in navbar → /admin  
 + Service Worker registration at end
 ```
 
-### **`login.html`**
+### **`/login`**
 ```diff
 + <link rel="preconnect"> tags for faster loads
 + Service Worker registration at end
 ```
 
-### **`admin.html`**
+### **`/admin`**
 ```diff
 + Service Worker registration at end
 ```
@@ -89,10 +89,10 @@ adminMgr.on('admins-updated', (e) => updateUI(adminMgr.getStats()));
 
 | Feature | Status | How to Use |
 |---------|--------|-----------|
-| **Add Admin by Email** | ✅ | admin.html → "Invite Admin by Email" |
-| **Remove Admin** | ✅ | admin.html → "Current Admins" → Remove button |
-| **Ban Users** | ✅ | admin.html → "All Users" → Ban button |
-| **Unban Users** | ✅ | admin.html → Filter "Banned" → Unban |
+| **Add Admin by Email** | ✅ | /admin → "Invite Admin by Email" |
+| **Remove Admin** | ✅ | /admin → "Current Admins" → Remove button |
+| **Ban Users** | ✅ | /admin → "All Users" → Ban button |
+| **Unban Users** | ✅ | /admin → Filter "Banned" → Unban |
 | **Pending Invites** | ✅ | Auto-promote on first Google login |
 | **Super Admin Protection** | ✅ | Cannot remove vishal797577@gmail.com |
 | **Real-time Sync** | ✅ | Changes appear instantly across tabs |
@@ -116,12 +116,12 @@ adminMgr.on('admins-updated', (e) => updateUI(adminMgr.getStats()));
 
 Users can now see admin system statistics **before login**:
 ```
-index.html → Click "📊 System Stats" 
+/ → Click "📊 System Stats" 
 → See live admin count, user count, banned count
 → Click "Sign In" to access full admin panel
 ```
 
-This addresses your request: *"I can see the admin page before logging in while coming from index.html to login.html"*
+This addresses your request: *"I can see the admin page before logging in while coming from / to /login"*
 
 ---
 
@@ -129,13 +129,13 @@ This addresses your request: *"I can see the admin page before logging in while 
 
 ### Flow Diagram
 ```
-User at index.html wants admin access
+User at / wants admin access
     ↓
 Method 1: Click "🔐 Admin" button
-    → admin.html (redirects to login if not auth'd)
+    → /admin (redirects to login if not auth'd)
     ↓
 Method 2: Click "📊 System Stats" button  
-    → admin-preview.html (read-only public view)
+    → /admin-preview (read-only public view)
     → Login from there to access full panel
     ↓
 Login page (3 options):
@@ -144,7 +144,7 @@ Login page (3 options):
     └─ Pre-approved email invite
     ↓
 After login with admin rights:
-    → Redirected to either control.html or admin.html
+    → Redirected to either /control or /admin
     ↓
 Full admin features unlocked:
     ├─ Add admins
@@ -214,7 +214,7 @@ Other hosting:
 
 ### Step 2: Test Admin Flow
 ```
-1. Go to index.html
+1. Go to /
 2. Click "🔐 Admin" button
 3. Sign in with Google OR credentials (admin / V2X@2024)
 4. You're now in admin panel!
@@ -260,7 +260,7 @@ const FALLBACK_ADMIN = {
 ```
 
 ### ✏️ Color Scheme
-**Any .html file**, `:root` section
+**Any legacy snapshot or migrated style file**, `:root` section
 ```css
 :root {
   --red: #ff2233;      /* Admin red */
@@ -354,7 +354,7 @@ Your V2X emergency clearance system is now:
 1. **Deploy** — Upload to Firebase/hosting
 2. **Test** — Follow admin flow walkthrough
 3. **Monitor** — Check Firebase console for stats
-4. **Share** — Give admin-preview.html link to show system stats
+4. **Share** — Give /admin-preview link to show system stats
 
 ---
 
@@ -362,8 +362,8 @@ Your V2X emergency clearance system is now:
 
 ```
 Code Written:
-  - New Files: 5 (sw.js, admin-management.js, admin-preview.html, + 2 guides)
-  - Files Modified: 3 (index.html, login.html, admin.html)
+  - New Files: 5 (sw.js, admin-management.js, /admin-preview, + 2 guides)
+  - Files Modified: 3 (/, /login, /admin)
   - Documentation: 1,500+ lines
   - Code: 600+ lines
 

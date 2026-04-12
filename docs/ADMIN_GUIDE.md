@@ -8,8 +8,8 @@
 ### Admin Access Methods
 
 #### 1️⃣ **Google OAuth (Recommended)**
-- Click "Continue with Google" on login.html
-- If your email is in `/v4/admins` → auto-redirected to control.html
+- Click "Continue with Google" on /login
+- If your email is in `/v4/admins` → auto-redirected to /control
 - Fast, secure, no passwords
 
 #### 2️⃣ **Demo Admin (For Testing)**
@@ -18,7 +18,7 @@
 - Instant access, works offline
 
 #### 3️⃣ **Pre-Approved Admin Invites**
-- Super admin can invite emails: `admin.html → "Invite Admin by Email"`
+- Super admin can invite emails: `/admin → "Invite Admin by Email"`
 - Email is pre-approved in `/v4/pending_admins`
 - On first Google sign-in → auto-promoted to admin
 
@@ -52,9 +52,9 @@ v4/
 
 | Role | Permissions | UI |
 |------|-------------|-----|
-| **Super Admin** ⭐ | Full access, cannot be removed | `control.html` + `admin.html` |
-| **Regular Admin** 🔐 | Manage users, add/remove admins | `control.html` + `admin.html` |
-| **User** 👤 | View own data, select role | `user-portal.html` + role-specific pages |
+| **Super Admin** ⭐ | Full access, cannot be removed | `/control` + `/admin` |
+| **Regular Admin** 🔐 | Manage users, add/remove admins | `/control` + `/admin` |
+| **User** 👤 | View own data, select role | `/user-portal` + role-specific pages |
 | **Banned** 🚫 | No access, redirected to login | — |
 
 ---
@@ -63,7 +63,7 @@ v4/
 
 ### Add Admin by Email (Pre-Approve)
 
-**File:** `admin.html`
+**File:** `/admin`
 
 1. Sign in as Super Admin or existing Admin
 2. Go to **"Invite Admin by Email"** section
@@ -76,7 +76,7 @@ v4/
 
 ### Remove Admin (Revoke Access)
 
-**File:** `admin.html` → "Current Admins" section
+**File:** `/admin` → "Current Admins" section
 
 1. Find the admin you want to remove
 2. Click **"❌ Remove Admin"** button
@@ -89,7 +89,7 @@ v4/
 
 ### Ban a User
 
-**File:** `admin.html` → "All Registered Users"
+**File:** `/admin` → "All Registered Users"
 
 1. Find the user → Click **"🚫 Ban"**
 2. Enter a reason (optional)
@@ -97,7 +97,7 @@ v4/
 
 ### Unban User
 
-**File:** `admin.html` → "All Registered Users" (Banned filter)
+**File:** `/admin` → "All Registered Users" (Banned filter)
 
 1. Find the banned user
 2. Click **"✅ Unban"**
@@ -158,7 +158,7 @@ isAdminSync() → returns sessionStorage value
 - No render-blocking external CSS
 - Fonts pre-connected: `<link rel="preconnect" href="...">`
 
-**Pre-connects added to index.html:**
+**Pre-connects added to /:**
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,9 +234,9 @@ sessionStorage.getItem('v2x_uid')
 
 ### Admin Guard (Zero-Flash)
 ```javascript
-// admin.html synchronous check before render
+// /admin synchronous check before render
 if (!sessionStorage.getItem('v2x_is_admin')) {
-  window.location.replace('login.html?target=admin.html');
+  window.location.replace('/login?target=/admin');
 }
 ```
 - No loading flicker
@@ -250,23 +250,23 @@ if (!sessionStorage.getItem('v2x_is_admin')) {
 **Goal:** Show admin dashboard as preview before requiring login
 
 **Implementation:**
-1. Create `/admin-preview.html` with read-only stats
-2. Add link in `index.html`
+1. Create `/admin-preview` with read-only stats
+2. Add link in `/`
 3. Redirect to login after 30 seconds (or on click)
 
 **Example:**
 ```html
-<!-- index.html -->
-<a href="/admin-preview.html" class="nav-lnk">
+<!-- / -->
+<a href="/admin-preview" class="nav-lnk">
   👁️ Admin Preview
 </a>
 
-<!-- admin-preview.html -->
+<!-- /admin-preview -->
 <div class="admin-preview">
   <h2>System Status</h2>
   <p>Total Users: <span id="statUsers">—</span></p>
   <p>Active Admins: <span id="statAdmins">—</span></p>
-  <button onclick="window.location.href='login.html'">
+  <button onclick="window.location.href='/login'">
     Sign In to Manage →
   </button>
 </div>
@@ -280,7 +280,7 @@ if (!sessionStorage.getItem('v2x_is_admin')) {
 
   // Auto-redirect after 30s
   setTimeout(() => {
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }, 30000);
 </script>
 ```
@@ -340,7 +340,7 @@ Create in project root (`/sw.js`), register in HTML:
 **Fix:** Click Google button in login → your admin status will be verified
 
 ### Changes not appearing instantly
-**Fix:** Check `admin.html` realtime listeners:
+**Fix:** Check `/admin` realtime listeners:
 ```javascript
 // Should log to console
 db.ref('v4/admins').on('value', snap => {
@@ -374,9 +374,9 @@ v4/pending_admins/example_com_1234567890/
 ## 📱 Mobile Support
 
 All pages are fully responsive:
-- `admin.html` → Stacks buttons on <640px
-- `login.html` → Single column on mobile
-- `index.html` → Nav collapses
+- `/admin` → Stacks buttons on <640px
+- `/login` → Single column on mobile
+- `/` → Nav collapses
 
 **Test:** Chrome DevTools → Toggle device toolbar → Test all screen sizes
 
@@ -434,7 +434,7 @@ const FALLBACK_ADMIN = {
 ```
 
 ### Change Color Scheme
-**Files:** CSS `:root` variables in all `.html` files
+**Files:** CSS `:root` variables in legacy snapshot sources and migrated route styles
 ```css
 :root {
   --red: #ff3344;      /* Admin color */

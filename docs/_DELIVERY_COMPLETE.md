@@ -209,16 +209,16 @@ Result: Imperceptible ✅
 
 ### MODIFIED FILES
 ```
-✅ control.html (script imports + dashboard styles added)
+✅ /control (script imports + dashboard styles added)
 ```
 
 ### EXISTING FILES (100% Compatible)
 ```
 ✅ firebase-config.js (no changes)
-✅ login.html (no changes)
-✅ emergency.html (no changes)
-✅ vehicle1.html (no changes)
-✅ vehicle2.html (no changes)
+✅ /login (no changes)
+✅ /emergency (no changes)
+✅ /vehicle1 (no changes)
+✅ /vehicle2 (no changes)
 ✅ All others (no changes)
 ```
 
@@ -353,16 +353,16 @@ Result: Smooth, confident, 5x accurate! ✅
 
 **Quick Test (2 minutes):**
 - [ ] Browser refresh (Ctrl+Shift+R)
-- [ ] Open control.html
+- [ ] Open /control
 - [ ] New "📡 GPS" tab visible? ✅
 - [ ] New "🛰️ Satellite" button visible? ✅
 - [ ] Click satellite button → map changes? ✅
 - [ ] Click back → map switches? ✅
 
 **Full Test (10 minutes):**
-- [ ] Open vehicle1.html, allow location
+- [ ] Open /vehicle1, allow location
 - [ ] Wait 15 seconds
-- [ ] Go back to control.html
+- [ ] Go back to /control
 - [ ] GPS tab shows numbers? ✅
 - [ ] Accuracy <20m? ✅
 - [ ] Confidence >50%? ✅

@@ -6,7 +6,7 @@ This v6.5 delivery is now hosted through Next.js routes.
 
 - Primary entry: `/` (Next.js home)
 - Module routes: `/login`, `/admin`, `/control`, `/user-portal`, `/emergency`, `/signal`, `/vehicle1`, `/vehicle2`
-- Legacy direct pages still available from `public/*.html` and `/legacy/*` aliases
+- Legacy direct snapshots are preserved under `archive/legacy/*` as `.md` files
 
 Migration docs:
 - `README.md`
@@ -38,7 +38,7 @@ Migration docs:
 | **QUICK_START_v65.md** | User Quick Start | ✅ Complete |
 
 ### System Enhancement
-- ✅ Updated **control.html** with new modules & dashboard
+- ✅ Updated **/control** with new modules & dashboard
 - ✅ Added GPS dashboard styling (100% responsive)
 - ✅ Integrated satellite map layer switching
 - ✅ 100% backward compatible (no breaking changes)
@@ -97,7 +97,7 @@ v2v-v2i-project/
 ### MODIFIED FILES
 ```
 v2v-v2i-project/
-├── control.html                 ← Updated with 4 new modules
+├── /control                 ← Updated with 4 new modules
 └── (version bumped to 6.5)
 ```
 
@@ -105,12 +105,12 @@ v2v-v2i-project/
 ```
 v2v-v2i-project/
 ├── firebase-config.js           ✅ Unchanged
-├── login.html                   ✅ Unchanged
-├── admin.html                   ✅ Unchanged
-├── emergency.html               ✅ Unchanged
-├── vehicle1.html                ✅ Unchanged
-├── vehicle2.html                ✅ Unchanged
-├── signal.html                  ✅ Unchanged
+├── /login                   ✅ Unchanged
+├── /admin                   ✅ Unchanged
+├── /emergency               ✅ Unchanged
+├── /vehicle1                ✅ Unchanged
+├── /vehicle2                ✅ Unchanged
+├── /signal                  ✅ Unchanged
 ├── All other files              ✅ Unchanged
 ```
 
@@ -288,14 +288,14 @@ Geofence Precision:  ±5m acceptable
 5. ✅ Done!
 
 ### Verification (10 minutes)
-1. Open control.html
+1. Open /control
 2. Look for "📡 GPS" tab → Should exist
 3. Look for "🛰️ Satellite" button → Should exist
 4. Click satellite button → Map changes
 5. ✅ All working!
 
 ### Rollback (if needed)
-1. Remove 4 script lines from control.html
+1. Remove 4 script lines from /control
 2. Delete 4 new .js files
 3. Refresh page
 4. ✅ Back to v6.0
@@ -348,7 +348,7 @@ Geofence Precision:  ±5m acceptable
 - [x] Satellite map integration complete
 - [x] Dashboard UI built & responsive
 - [x] Integration layer functional
-- [x] control.html updated seamlessly
+- [x] /control updated seamlessly
 - [x] Backward compatibility verified
 - [x] Performance optimized
 - [x] Security reviewed

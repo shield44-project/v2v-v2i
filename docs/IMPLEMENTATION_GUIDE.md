@@ -27,9 +27,9 @@
 ├── admin-management.js        ← Modular admin manager class
 ├── ADMIN_GUIDE.md            ← Detailed admin operations guide
 ├── IMPLEMENTATION_GUIDE.md   ← This file
-├── index.html               ✨ (updated with nav link + SW register)
-├── login.html              ✨ (updated with preconnect + SW register)
-└── admin.html              ✨ (updated with SW register)
+├── /               ✨ (updated with nav link + SW register)
+├── /login              ✨ (updated with preconnect + SW register)
+└── /admin              ✨ (updated with SW register)
 ```
 
 ---
@@ -49,13 +49,13 @@ The service worker file (`sw.js`) is already created. It will:
 
 **Path 1: Direct Link (if not logged in)**
 ```
-https://yoursite.com/admin.html
-→ Redirects to login.html?target=admin.html&need=admin
+https://yoursite.com/admin
+→ Redirects to /login?target=/admin&need=admin
 ```
 
 **Path 2: From Index Page**
 ```
-index.html → Click "🔐 Admin" button → admin.html
+/ → Click "🔐 Admin" button → /admin
 → If redirected to login → use Google OAuth or demo credentials
 ```
 
@@ -67,7 +67,7 @@ Password: V2X@2024
 
 ### 3️⃣ **Invite First Admin**
 1. Sign in as Super Admin (vishal797577@gmail.com with Google)
-2. Go to `admin.html` → "Invite Admin by Email"
+2. Go to `/admin` → "Invite Admin by Email"
 3. Enter target email → Click "Add Admin"
 4. They get promoted on their next login
 
@@ -150,7 +150,7 @@ Google Fonts → CACHE-FIRST (30 days TTL) →
 ### Admin Database Flow
 
 ```
-User clicks "Add Admin" (admin.html)
+User clicks "Add Admin" (/admin)
     ↓
 inviteAdmin() function
     ├─ Validate email
@@ -162,13 +162,13 @@ Firebase /v4/pending_admins/{key}
     ├─ addedBy: "super_admin_uid"
     └─ addedAt: "2024-04-10T..."
         ↓
-User signs in with Google (login.html)
+User signs in with Google (/login)
     ├─ registerUser() → /v4/users/{uid}
     ├─ checkAndApplyPendingInvite() 
     │   ├─ Find pending entry by email
     │   ├─ Move to /v4/admins/{uid}
     │   └─ Delete pending entry
-    └─ Redirect to control.html
+    └─ Redirect to /control
 ```
 
 ---
@@ -202,7 +202,7 @@ When user is banned:
   ├─ bannedAt
   └─ bannedBy (admin who banned them)
 
-login.html checks:
+/login checks:
   → if (checkBanned(uid)) → block login
 ```
 
@@ -226,17 +226,17 @@ login.html checks:
   - Customization examples
 
 ### Modified Files
-- **`index.html`** 
+- **`/`** 
   - Added: `<link rel="preconnect">` tags
   - Added: Admin button in nav
   - Added: Service worker registration
 
-- **`login.html`**
+- **`/login`**
   - Added: `<link rel="preconnect">` tags
   - Added: Service worker registration
   - No logic changes (existing auth works perfectly)
 
-- **`admin.html`**
+- **`/admin`**
   - Added: Service worker registration
   - All admin logic already optimized
 
@@ -259,8 +259,8 @@ login.html checks:
 
 ### Test Admin Flow
 ```
-1. Open index.html
-2. Click "🔐 Admin" → Go to admin.html
+1. Open /
+2. Click "🔐 Admin" → Go to /admin
 3. If not logged in → Redirects to login
 4. Sign in with demo (admin / V2X@2024) or Google
 5. Should show admin panel

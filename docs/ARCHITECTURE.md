@@ -9,7 +9,7 @@
 - Includes native React pages for login, role selection, admin, control, emergency, signal, vehicle1, and vehicle2.
 - Includes native React pages for login, role selection, admin, admin-preview, control, emergency, signal, vehicle1, and vehicle2.
 
-2. Legacy Simulation Layer (`public/*.html`, `public/*.js`)
+2. Legacy Snapshot Layer (`archive/legacy/*.md`, archived `.js` references)
 - Contains existing V2V/V2I page logic.
 - Uses Firebase Realtime Database and browser APIs.
 - Retained as fallback compatibility layer under `/legacy/*` routes.

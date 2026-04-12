@@ -3,10 +3,10 @@
 ## 🎯 Key Links
 
 ```
-Home Page:              index.html
-Login Page:             login.html
-Admin Panel:            admin.html
-Admin Preview:          admin-preview.html
+Home Page:              /
+Login Page:             /login
+Admin Panel:            /admin
+Admin Preview:          /admin-preview
 Admin Guide (Detailed): ADMIN_GUIDE.md
 Implementation Guide:   IMPLEMENTATION_GUIDE.md
 ```
@@ -36,20 +36,20 @@ Password: V2X@2024
 ## 👥 User Management
 
 ### Add Admin
-1. admin.html → "Invite Admin by Email"
+1. /admin → "Invite Admin by Email"
 2. Enter target email
 3. Click "Add Admin"
 4. They get promoted on next login ✓
 
 ### Remove Admin
-1. admin.html → "Current Admins"
+1. /admin → "Current Admins"
 2. Find the admin
 3. Click "❌ Remove Admin"
 4. Confirm
 5. Done ✓
 
 ### Ban User
-1. admin.html → "All Registered Users"
+1. /admin → "All Registered Users"
 2. Find the user
 3. Click "🚫 Ban"
 4. Enter reason (optional)
@@ -57,7 +57,7 @@ Password: V2X@2024
 6. User blocked from login ✓
 
 ### Unban User
-1. admin.html → "All Registered Users"
+1. /admin → "All Registered Users"
 2. Filter: "Banned" tab
 3. Find user
 4. Click "✅ Unban"
@@ -137,10 +137,10 @@ Password: V2X@2024
 
 | File | Size | Gzipped | Purpose |
 |------|------|---------|---------|
-| `index.html` | 32KB | 8.2KB | Home page |
-| `login.html` | 28KB | 7.1KB | Auth page |
-| `admin.html` | 35KB | 8.9KB | Admin panel |
-| `admin-preview.html` | 12KB | 3.2KB | Stats preview |
+| `/` | 32KB | 8.2KB | Home page |
+| `/login` | 28KB | 7.1KB | Auth page |
+| `/admin` | 35KB | 8.9KB | Admin panel |
+| `/admin-preview` | 12KB | 3.2KB | Stats preview |
 | `firebase-config.js` | 18KB | 4.6KB | Config + helpers |
 | `sw.js` | 6KB | 1.8KB | Service worker |
 | `admin-management.js` | 7KB | 2.1KB | Admin class |
@@ -270,7 +270,7 @@ db.ref('v4/banned').once('value', s => console.log(s.val()))
 ```bash
 firebase login
 firebase init hosting
-# Copy all .html, .js, .md files to public/
+# Copy active app/static assets to runtime and keep legacy snapshots in archive/
 firebase deploy
 ```
 
@@ -281,7 +281,7 @@ firebase deploy
 3. Enable Gzip compression
 4. Set cache headers:
    - .js/.css: 30 days
-   - .html: 1 hour
+  - legacy snapshot normalization: 1 hour
    - sw.js: no-cache
 ```
 
