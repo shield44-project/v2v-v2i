@@ -53,7 +53,7 @@ Then open: **http://localhost:5000**
 
 1. Open `http://localhost:5000/login.html`
 2. Click **Continue with Google**
-3. Sign in with **vishal797577@gmail.com**
+3. Sign in with **kstejas2718@gmail.com**
 4. The system auto-seeds you into `/v4/admins` as **Super Admin** ⭐
 5. You are redirected to **Control Center**
 
@@ -110,7 +110,7 @@ Live URL: **https://v2v-v2i-project.web.app**
 | `auth/unauthorized-domain` | Run `firebase serve` — do NOT use `file://` |
 | `auth/popup-blocked` | Allow popups — code auto-falls back to redirect |
 | User not getting admin | Sign in with Google first, then promote in Control Center |
-| Super admin not auto-seeded | Make sure you sign in with `vishal797577@gmail.com` exactly |
+| Super admin not auto-seeded | Make sure you sign in with `kstejas2718@gmail.com` exactly |
 
 ---
 

@@ -11,7 +11,7 @@
 - **Manage Admin Access** - Remove admin privileges instantly
 - **Ban/Unban Users** - Prevent access or restore users
 - **Real-time User List** - Live sync with Firebase Realtime Database
-- **Super Admin Protection** - Cannot remove super admin (vishal797577@gmail.com)
+- **Super Admin Protection** - Cannot remove configured super admin (`SUPER_ADMIN_EMAIL`)
 
 ### ✅ Performance Optimizations
 - **Service Worker** - Offline support, smart caching (3-5x faster loads)
@@ -66,7 +66,7 @@ Password: V2X@2024
 ```
 
 ### 3️⃣ **Invite First Admin**
-1. Sign in as Super Admin (vishal797577@gmail.com with Google)
+1. Sign in as Super Admin (`SUPER_ADMIN_EMAIL`, currently `kstejas2718@gmail.com`)
 2. Go to `admin.html` → "Invite Admin by Email"
 3. Enter target email → Click "Add Admin"
 4. They get promoted on their next login

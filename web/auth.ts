@@ -17,7 +17,7 @@ if (process.env.VERCEL && !authSecret) {
   );
 }
 
-if (!process.env.VERCEL && !authSecret) {
+if (process.env.NODE_ENV === "development" && !process.env.VERCEL && !authSecret) {
   process.emitWarning(
     "AUTH_SECRET/NEXTAUTH_SECRET is not set. Configure it to avoid local auth/session issues.",
   );

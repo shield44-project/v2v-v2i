@@ -24,7 +24,7 @@ Password: V2X@2024
 ### Google OAuth (Recommended)
 - Click "Continue with Google" on login page
 - Use any Google account
-- Super admin: vishal797577@gmail.com (promoted automatically)
+- Super admin is controlled by `SUPER_ADMIN_EMAIL` (set to `kstejas2718@gmail.com`)
 
 ### Pre-Approved Admin Invite
 1. Super admin invites your email in admin panel
@@ -198,11 +198,8 @@ Firebase /v4/
 ## 🎨 Customization
 
 ### Change Super Admin Email
-**File:** `firebase-config.js`
-```javascript
-const SUPER_ADMIN_EMAIL = 'vishal797577@gmail.com';
-// Change to your email ↑
-```
+Set `SUPER_ADMIN_EMAIL` in your deployment/server environment (and local env file).
+For this project, use `SUPER_ADMIN_EMAIL=kstejas2718@gmail.com`.
 
 ### Change Demo Credentials
 **File:** `firebase-config.js`
