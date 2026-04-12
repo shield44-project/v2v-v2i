@@ -1,6 +1,6 @@
 # V2X Connect (Next.js + TypeScript + Vercel Google Sign-In)
 
-This repository now ships a refactored web app in `/home/runner/work/v2v-v2i/v2v-v2i/web` using:
+This repository now ships a refactored web app in `./web` using:
 
 - Next.js (App Router)
 - TypeScript
@@ -22,7 +22,7 @@ Firebase auth/runtime files have been removed from the active app path.
    - Client Secret
 
 ### B. Set environment variables
-In `/home/runner/work/v2v-v2i/v2v-v2i/web`, create `.env.local` from `.env.example`:
+In `./web`, create `.env.local` from `.env.example`:
 
 ```bash
 cp .env.example .env.local
@@ -44,7 +44,7 @@ In Vercel Project Settings → Environment Variables, add:
 ## 2) Local run
 
 ```bash
-cd /home/runner/work/v2v-v2i/v2v-v2i/web
+cd web
 npm install
 npm run dev
 ```
