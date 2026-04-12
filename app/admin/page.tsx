@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
+import { ChipRow, PageShell, PanelHeader, StatusMessage, TableCard } from "../components/LiveBlocks";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -83,38 +84,34 @@ export default function AdminPage() {
   };
 
   return (
-    <main className="page">
+    <PageShell pageClassName="admin-page" cardClassName="admin-card" maxWidth={1100}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
-      <div className="card" style={{ maxWidth: 1100 }}>
-        <div className="legacy-header">
-          <div>
-            <h1>Admin Panel</h1>
-            <p>{session ? "Signed in as " + session.user : "Loading admin session..."}</p>
-          </div>
-          <div className="legacy-actions">
-            <button type="button" onClick={() => router.push("/control")}>Open Control</button>
-          </div>
-        </div>
+      <PanelHeader
+        title="Admin Panel"
+        subtitle={session ? "Signed in as " + session.user : "Loading admin session..."}
+        actions={<button type="button" onClick={() => router.push("/control")}>Open Control</button>}
+      />
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          <div className="rchip">Users: <strong>{stats.users}</strong></div>
-          <div className="rchip">Admins: <strong>{stats.admins}</strong></div>
-          <div className="rchip">Banned: <strong>{stats.banned}</strong></div>
-          <div className="rchip">Pending: <strong>{stats.pending}</strong></div>
-        </div>
+      <ChipRow className="chip-grid" style={{ marginTop: 14 }}>
+        <div className="rchip">Users: <strong>{stats.users}</strong></div>
+        <div className="rchip">Admins: <strong>{stats.admins}</strong></div>
+        <div className="rchip">Banned: <strong>{stats.banned}</strong></div>
+        <div className="rchip">Pending: <strong>{stats.pending}</strong></div>
+      </ChipRow>
 
-        <form onSubmit={inviteAdmin} style={{ marginTop: 14, display: "grid", gap: 10, gridTemplateColumns: "1fr auto" }}>
-          <input
-            className="form-inp"
-            placeholder="Invite admin by email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-          />
-          <button className="submit-btn submit-user" type="submit">Save Invite</button>
-        </form>
+      <form className="inline-form" onSubmit={inviteAdmin} style={{ marginTop: 14, display: "grid", gap: 10, gridTemplateColumns: "1fr auto" }}>
+        <input
+          className="form-inp"
+          placeholder="Invite admin by email"
+          value={inviteEmail}
+          onChange={(e) => setInviteEmail(e.target.value)}
+        />
+        <button className="submit-btn submit-user" type="submit">Save Invite</button>
+      </form>
 
-        {message && <p style={{ marginTop: 10 }}>{message}</p>}
+      {message && <StatusMessage>{message}</StatusMessage>}
 
+      <TableCard>
         <div style={{ marginTop: 14, overflowX: "auto" }}>
           <table className="simple-table">
             <thead>
@@ -132,7 +129,7 @@ export default function AdminPage() {
                   <td>{user.email || "-"}</td>
                   <td>{user.status || "active"}</td>
                   <td>
-                    <div className="legacy-actions" style={{ gap: 6 }}>
+                    <div className="legacy-actions action-pack" style={{ gap: 6 }}>
                       <button
                         type="button"
                         onClick={() => runAction(() => window.promoteToAdmin(user.uid, user.email || "", user.name || "", session?.uid))}
@@ -164,7 +161,7 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </main>
+      </TableCard>
+    </PageShell>
   );
 }

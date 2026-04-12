@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>V2X Connect — Emergency Vehicle Clearance System</title>
-<meta name="description" content="Real-time V2V and V2I Emergency Vehicle Clearance System with live GPS tracking and smart traffic signal preemption.">
+<meta name="description" content="Archived V2V and V2I Emergency Vehicle Clearance System snapshot with GPS and traffic signal history.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
@@ -337,6 +337,7 @@ body{
   .stat-item{border-bottom:1px solid var(--border)}
 }
 </style>
+<link rel="stylesheet" href="../archive-theme.css">
 </head>
 <body>
 
@@ -365,7 +366,7 @@ body{
   </div>
   <div class="live-badge" id="liveBadge">
     <div class="live-dot"></div>
-    <span>FIREBASE LIVE</span>
+    <span>ARCHIVED SNAPSHOT</span>
   </div>
 </nav>
 
@@ -373,7 +374,7 @@ body{
 <section class="hero">
   <div class="hero-eyebrow">
     <span>🛰️</span>
-    <span>REAL-TIME · GPS · V2V · V2I · SILK BOARD JUNCTION</span>
+    <span>ARCHIVE · GPS · V2V · V2I · SILK BOARD JUNCTION</span>
   </div>
 
   <h1>
@@ -382,8 +383,8 @@ body{
   </h1>
 
   <p class="hero-sub">
-    A cutting-edge Vehicle-to-Vehicle &amp; Vehicle-to-Infrastructure communication platform
-    for real-time emergency response coordination with live GPS and smart signal preemption.
+    An archived Vehicle-to-Vehicle &amp; Vehicle-to-Infrastructure communication platform
+    preserved for reference with GPS and smart signal preemption.
   </p>
 
   <!-- GLASSMORPHISM LOCATION CARD -->
@@ -458,7 +459,7 @@ body{
   <div class="section-hdr">
     <div class="section-eyebrow">SYSTEM NODES</div>
     <h2>Open an App Node</h2>
-    <p>Each device opens one app. All nodes communicate in real-time via Firebase.</p>
+    <p>Each device opens one app. All nodes were designed to communicate via Firebase.</p>
   </div>
 
   <div class="app-grid">
@@ -467,7 +468,7 @@ body{
     <a class="app-card card-cyan" href="control.html" id="open-control">
       <div class="app-ico">🎛️</div>
       <h3>Control Center</h3>
-      <p>Live Leaflet map dashboard showing all units, V2V/V2I zones, route history, analytics, and real-time event log.</p>
+      <p>Leaflet map dashboard showing all units, V2V/V2I zones, route history, analytics, and event logs.</p>
       <div class="app-tag">🖥️ DESKTOP / LAPTOP</div>
       <span class="app-arrow">→</span>
     </a>
@@ -476,7 +477,7 @@ body{
     <a class="app-card card-red" href="emergency.html" id="open-emergency">
       <div class="app-ico">🚨</div>
       <h3>Emergency Vehicle</h3>
-      <p>Mobile interface for ambulance, fire engine, or police. Activates live GPS broadcast and siren simulation.</p>
+      <p>Mobile interface for ambulance, fire engine, or police. Preserved GPS broadcast and siren simulation flows.</p>
       <div class="app-tag">📱 MOBILE 1 (EV DRIVER)</div>
       <span class="app-arrow">→</span>
     </a>
@@ -516,7 +517,7 @@ body{
   <div class="section-hdr">
     <div class="section-eyebrow">WORKFLOW</div>
     <h2>How It Works</h2>
-    <p>Four devices, one Firebase database, real-time emergency coordination.</p>
+    <p>Four devices, one Firebase database, archived emergency coordination flows.</p>
   </div>
 
   <div class="flow-grid">
@@ -556,14 +557,14 @@ body{
     <span class="tech-chip">🧭 Haversine Formula</span>
     <span class="tech-chip">🔊 Web Audio API</span>
     <span class="tech-chip">🎨 Dark Mode + Glassmorphism</span>
-    <span class="tech-chip">⚡ Real-Time V2V/V2I Logic</span>
+    <span class="tech-chip">⚡ V2V/V2I Logic Archive</span>
     <span class="tech-chip">📍 Silk Board Junction, Bangalore</span>
   </div>
 </section>
 
 <!-- ── FOOTER ── -->
 <footer class="foot">
-  <p>🎓 V2X Connect — V2V + V2I Emergency Clearance System v6.0 &nbsp;|&nbsp;
+  <p>🎓 V2X Connect — V2V + V2I Emergency Clearance System archive &nbsp;|&nbsp;
   Real GPS · Firebase · Leaflet · Silk Board Junction, Bangalore, India &nbsp;|&nbsp;
   <a href="control.html">Control Center</a> · <a href="emergency.html">Emergency</a> · <a href="signal.html">Signal</a> · <a href="vehicle1.html">Vehicle 1</a> · <a href="vehicle2.html">Vehicle 2</a>
   </p>
@@ -623,7 +624,7 @@ function checkLocation() {
   );
 }
 
-// ── FIREBASE LIVE BADGE ──────────────────────────────────────────
+// ── FIREBASE ARCHIVE BADGE ──────────────────────────────────────
 db.ref('.info/connected').on('value', s => {
   const b = document.getElementById('liveBadge');
   b.style.opacity = s.val() ? '1' : '0.4';

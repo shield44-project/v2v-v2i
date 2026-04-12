@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- V2X Connect v6.0 | login.html | Fixed: race condition, double-call -->
+<!-- V2X Connect archive snapshot | login.html | legacy auth flow preserved for reference -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>V2X Connect — Sign In</title>
-<meta name="description" content="Secure login for V2X Emergency Vehicle Clearance System v6.0">
+<meta name="description" content="Archived secure login snapshot for the V2X Emergency Vehicle Clearance System.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
@@ -127,6 +127,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 @keyframes scan{0%,100%{top:0;opacity:0}10%{opacity:.4}90%{opacity:.3}99%{top:100%}}
 @media(max-width:820px){body{flex-direction:column;overflow:auto}.left{flex:none;padding:40px 24px 20px;min-height:auto}.features{display:none}.brand-sub{margin-bottom:20px}.brand-icon-wrap{display:none}.right{width:100%;padding:24px 20px;border-left:none;border-top:1px solid rgba(255,255,255,.06)}.brand-ver{left:24px}}
 </style>
+<link rel="stylesheet" href="../archive-theme.css">
 </head>
 <body>
 
@@ -143,10 +144,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 <!-- LEFT -->
 <div class="left">
   <div class="brand-wrap">
-    <div class="brand-badge"><div class="dot"></div>LIVE SYSTEM · V6.0 · SILK BOARD JN.</div>
+    <div class="brand-badge"><div class="dot"></div>ARCHIVED SYSTEM · SNAPSHOT · SILK BOARD JN.</div>
     <div class="brand-icon-wrap"><div class="brand-icon">📡</div></div>
     <div class="brand-title"><span class="g1">Emergency</span><br><span class="g2">Clearance</span><br><span class="g1">System</span></div>
-    <p class="brand-sub">Military-grade V2X coordination. Real-time GPS. Kalman smoothing. Vincenty precision. Firebase DB-powered admin management.</p>
+    <p class="brand-sub">Archived V2X coordination. GPS history. Kalman smoothing. Vincenty precision. Firebase DB-powered admin management.</p>
     <div class="features">
       <div class="feat"><div class="feat-dot fd-red">🚨</div><div class="feat-text"><h4>Emergency Vehicle</h4><p>Kalman-filtered GPS · Siren simulation · Auto route logging</p></div></div>
       <div class="feat"><div class="feat-dot fd-yel">🚦</div><div class="feat-text"><h4>Smart Traffic Signal</h4><p>V2I preemption within range · Drag/rotate intersection widget</p></div></div>
@@ -154,7 +155,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
       <div class="feat"><div class="feat-dot fd-cyn">🎛️</div><div class="feat-text"><h4>Admin Control Center</h4><p>Live map · User management · Analytics · Signal override</p></div></div>
     </div>
   </div>
-  <div class="brand-ver">V2X CONNECT v6.0 · SILK BOARD JUNCTION, BANGALORE · VINCENTY WGS-84 · KALMAN GPS · FIREBASE</div>
+  <div class="brand-ver">V2X CONNECT archive · SILK BOARD JUNCTION, BANGALORE · VINCENTY WGS-84 · KALMAN GPS · FIREBASE</div>
 </div>
 
 <!-- RIGHT -->
@@ -165,8 +166,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
     <strong>⚠️ Firebase Auth not enabled. Fix in 3 steps:</strong><br><br>
     1. <a href="https://console.firebase.google.com/project/v2v-v2i-project/authentication/providers" target="_blank">Firebase Console → Authentication</a><br>
     2. Click <strong>Google</strong> → Enable → Save<br>
-    3. Run <strong>firebase serve</strong> and open localhost:5000<br><br>
-    ↓ Until then, use the <strong>demo admin</strong> login below
+    3. Run <strong>firebase emulators:start</strong> or your Next dev server, then add your Vercel host <strong>v2x-v2i.vercel.app</strong> to Firebase Authorized Domains<br><br>
+    ↓ Until then, use the <strong>archive demo</strong> login below
   </div>
 
   <!-- Already signed in -->
@@ -199,7 +200,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 
   <!-- ADMIN FORM -->
   <div class="form-panel show" id="panelAdmin">
-    <div class="hint">Firebase email/password — or demo:<br>Email: <strong>admin</strong> &nbsp;|&nbsp; Password: <strong>V2X@2024</strong></div>
+    <div class="hint">Firebase email/password — archive demo mode is built in for local review.</div>
     <div class="form-group">
       <label class="form-lbl" for="adminEmail">EMAIL / USERNAME</label>
       <input class="form-inp" type="text" id="adminEmail" placeholder="admin@example.com or 'admin'" autocomplete="email">
@@ -219,7 +220,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
   <div class="form-panel" id="panelUser">
     <div class="form-group">
       <label class="form-lbl" for="userName">YOUR NAME / CALL SIGN</label>
-      <input class="form-inp user-style" type="text" id="userName" placeholder="e.g. Ayush, EV-Alpha, Signal-01" maxlength="30" autocomplete="nickname">
+      <input class="form-inp user-style" type="text" id="userName" placeholder="e.g. Driver-01, EV-Alpha, Signal-01" maxlength="30" autocomplete="nickname">
     </div>
     <button class="submit-btn submit-user" onclick="loginUser()">👤 Continue to Role Selection →</button>
     <div class="msg" id="userErr"></div>
@@ -387,7 +388,7 @@ function signInWithGoogle() {
         return;
       }
       if (isAuthConfigError(err.code)) { showSetupGuide(); showMsg('googleErr', '⚠️ Google Auth not set up. See guide above.', 'warn'); resetGoogleBtn(); return; }
-      if (err.code === 'auth/unauthorized-domain') { showMsg('googleErr', '⛔ Unauthorized domain. Run: firebase serve', 'err'); resetGoogleBtn(); return; }
+      if (err.code === 'auth/unauthorized-domain') { showMsg('googleErr', '⛔ Unauthorized domain. Add v2x-v2i.vercel.app to Firebase Authorized Domains.', 'err'); resetGoogleBtn(); return; }
       if (err.code === 'auth/network-request-failed') { showMsg('googleErr', '⛔ Network error. Check your internet.', 'err'); resetGoogleBtn(); return; }
       showMsg('googleErr', '❌ ' + (err.message || err.code), 'err');
       resetGoogleBtn();
@@ -411,13 +412,15 @@ async function loginAdmin() {
   if (!rawInput) { showMsg('adminErr', '⚠️ Enter email or username', 'err'); return; }
   if (!pass)     { showMsg('adminErr', '⚠️ Enter password', 'err'); return; }
 
-  // ── DEMO FALLBACK ──
-  if (rawInput.toLowerCase() === FALLBACK_ADMIN.user && pass === FALLBACK_ADMIN.pass) {
-    setSession({ user: 'DEMO ADMIN', email: 'admin@v2x.local', uid: 'admin_local', isAdmin: true, role: 'admin' });
-    showMsg('adminErr', '✅ Demo admin — loading Control Center...', 'ok');
-    btn.disabled = true;
-    setTimeout(() => window.location.href = 'control.html', 700);
-    return;
+  // ── DEMO FALLBACK DISABLED IN ARCHIVE SNAPSHOT ──
+  if (FALLBACK_ADMIN) {
+    if (rawInput.toLowerCase() === FALLBACK_ADMIN.user && pass === FALLBACK_ADMIN.pass) {
+      setSession({ user: 'DEMO ADMIN', email: 'archive-admin@local', uid: 'admin_local', isAdmin: true, role: 'admin' });
+      showMsg('adminErr', '✅ Archive demo admin — loading Control Center...', 'ok');
+      btn.disabled = true;
+      setTimeout(() => window.location.href = 'control.html', 700);
+      return;
+    }
   }
 
   // ── FIREBASE EMAIL/PASSWORD ──
@@ -446,12 +449,12 @@ async function loginAdmin() {
     btn.disabled  = false;
     btn.innerHTML = '🔐 Access Control Center';
     const msgs = {
-      'auth/configuration-not-found': '⚠️ Firebase Auth not set up. Use demo: admin / V2X@2024',
+      'auth/configuration-not-found': '⚠️ Firebase Auth not set up. Use the archive demo account.',
       'auth/user-not-found':          '❌ No account with this email.',
       'auth/wrong-password':          '❌ Wrong password.',
       'auth/invalid-email':           '❌ Invalid email format.',
       'auth/too-many-requests':       '⚠️ Too many attempts. Wait a minute.',
-      'auth/operation-not-allowed':   '⚠️ Firebase Auth not enabled. Use demo: admin / V2X@2024',
+      'auth/operation-not-allowed':   '⚠️ Firebase Auth not enabled. Use the archive demo account.',
       'auth/invalid-credential':      '❌ Invalid email or password.',
     };
     showMsg('adminErr', msgs[e.code] || ('❌ ' + e.message), 'err');

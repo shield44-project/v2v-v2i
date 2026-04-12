@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
+import { PageShell, StatusMessage } from "../components/LiveBlocks";
 
 const SUPER_ADMIN_EMAIL = "vishal797577@gmail.com";
 
@@ -195,76 +196,76 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="page">
+    <PageShell pageClassName="login-page" cardClassName="login-card" maxWidth={640}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="screen-head">
         <h1>V2X Login</h1>
         <p>Native Next.js login page using your existing Firebase and session model.</p>
-        {hostLabel && (
-          <p style={{ marginTop: 8 }}>
-            <strong>Current Host:</strong> {hostLabel}
-          </p>
-        )}
-
-        {!scriptsReady && <p>Loading Firebase scripts and auth bridge...</p>}
-
-        {alreadyIn && (
-          <div className="legacy-header" style={{ marginTop: 16 }}>
-            <div>
-              <strong>Already signed in:</strong> {alreadyIn.user}
-              <p style={{ margin: "6px 0 0" }}>{alreadyIn.isAdmin ? "Admin session" : "User session"}</p>
-            </div>
-            <div className="legacy-actions">
-              <button type="button" onClick={() => redirectForSession(alreadyIn)}>Continue</button>
-              <button type="button" onClick={signOut}>Sign Out</button>
-            </div>
-          </div>
-        )}
-
-        <div style={{ marginTop: 16 }} className="legacy-actions">
-          <button type="button" onClick={signInGoogle} disabled={!canUseFirebase || busy}>
-            {busy ? "Signing in..." : "Continue with Google"}
-          </button>
-        </div>
-
-        <div style={{ marginTop: 16 }} className="legacy-actions">
-          <button type="button" onClick={() => setMode("admin")} aria-pressed={mode === "admin"}>Admin</button>
-          <button type="button" onClick={() => setMode("guest")} aria-pressed={mode === "guest"}>Guest</button>
-        </div>
-
-        {mode === "admin" ? (
-          <form onSubmit={loginAdmin} style={{ marginTop: 16, display: "grid", gap: 10 }}>
-            <input
-              className="form-inp"
-              placeholder="Admin email or demo username 'admin'"
-              value={adminEmail}
-              onChange={(e) => setAdminEmail(e.target.value)}
-            />
-            <input
-              className="form-inp"
-              type="password"
-              placeholder="Password"
-              value={adminPass}
-              onChange={(e) => setAdminPass(e.target.value)}
-            />
-            <button className="submit-btn submit-admin" type="submit" disabled={busy || !scriptsReady}>
-              {busy ? "Checking..." : "Access Control Center"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={continueGuest} style={{ marginTop: 16, display: "grid", gap: 10 }}>
-            <input
-              className="form-inp"
-              placeholder="Your name or call sign"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-            />
-            <button className="submit-btn submit-user" type="submit">Continue to Role Selection</button>
-          </form>
-        )}
-
-        {message && <p style={{ marginTop: 14 }}><strong>Status:</strong> {message}</p>}
       </div>
-    </main>
+      {hostLabel && (
+        <p className="meta-pill" style={{ marginTop: 8 }}>
+          <strong>Current Host:</strong> {hostLabel}
+        </p>
+      )}
+
+      {!scriptsReady && <StatusMessage>Loading Firebase scripts and auth bridge...</StatusMessage>}
+
+      {alreadyIn && (
+        <div className="legacy-header" style={{ marginTop: 16 }}>
+          <div>
+            <strong>Already signed in:</strong> {alreadyIn.user}
+            <p style={{ margin: "6px 0 0" }}>{alreadyIn.isAdmin ? "Admin session" : "User session"}</p>
+          </div>
+          <div className="legacy-actions">
+            <button type="button" onClick={() => redirectForSession(alreadyIn)}>Continue</button>
+            <button type="button" onClick={signOut}>Sign Out</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: 16 }} className="legacy-actions action-row">
+        <button type="button" onClick={signInGoogle} disabled={!canUseFirebase || busy}>
+          {busy ? "Signing in..." : "Continue with Google"}
+        </button>
+      </div>
+
+      <div style={{ marginTop: 16 }} className="legacy-actions mode-toggle">
+        <button className="mode-btn" type="button" onClick={() => setMode("admin")} aria-pressed={mode === "admin"}>Admin</button>
+        <button className="mode-btn" type="button" onClick={() => setMode("guest")} aria-pressed={mode === "guest"}>Guest</button>
+      </div>
+
+      {mode === "admin" ? (
+        <form className="stack-form" onSubmit={loginAdmin} style={{ marginTop: 16, display: "grid", gap: 10 }}>
+          <input
+            className="form-inp"
+            placeholder="Admin email or demo username 'admin'"
+            value={adminEmail}
+            onChange={(e) => setAdminEmail(e.target.value)}
+          />
+          <input
+            className="form-inp"
+            type="password"
+            placeholder="Password"
+            value={adminPass}
+            onChange={(e) => setAdminPass(e.target.value)}
+          />
+          <button className="submit-btn submit-admin" type="submit" disabled={busy || !scriptsReady}>
+            {busy ? "Checking..." : "Access Control Center"}
+          </button>
+        </form>
+      ) : (
+        <form className="stack-form" onSubmit={continueGuest} style={{ marginTop: 16, display: "grid", gap: 10 }}>
+          <input
+            className="form-inp"
+            placeholder="Your name or call sign"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+          />
+          <button className="submit-btn submit-user" type="submit">Continue to Role Selection</button>
+        </form>
+      )}
+
+      {message && <StatusMessage><strong>Status:</strong> {message}</StatusMessage>}
+    </PageShell>
   );
 }

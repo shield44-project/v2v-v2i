@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
+import { ChipRow, PageShell, PanelHeader, StatusMessage, TableCard } from "../components/LiveBlocks";
 
 const unitKeys = ["emergency", "signal", "vehicle1", "vehicle2"];
 
@@ -85,63 +86,61 @@ export default function ControlPage() {
   };
 
   return (
-    <main className="page">
+    <PageShell pageClassName="control-page" cardClassName="control-card" maxWidth={1200}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
-      <div className="card" style={{ maxWidth: 1200 }}>
-        <div className="legacy-header">
-          <div>
-            <h1>Control Center</h1>
-            <p>{session ? "Admin session: " + session.user : "Loading control session..."}</p>
-          </div>
-          <div className="legacy-actions">
-            <button type="button" onClick={() => router.push("/admin")}>Open Admin</button>
-          </div>
-        </div>
+      <PanelHeader
+        title="Control Center"
+        subtitle={session ? "Admin session: " + session.user : "Loading control session..."}
+        actions={<button type="button" onClick={() => router.push("/admin")}>Open Admin</button>}
+      />
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          {unitKeys.map((key) => {
-            const unit = units[key] || {};
-            return (
-              <div key={key} className="rchip">
-                <strong>{key}</strong>
-                <div style={{ fontSize: 12, marginTop: 4 }}>
-                  {unit.active ? "online" : "idle"} | {unit.lat ? `${Number(unit.lat).toFixed(5)}, ${Number(unit.lng).toFixed(5)}` : "no location"}
-                </div>
+      <ChipRow className="unit-grid" style={{ marginTop: 14 }}>
+        {unitKeys.map((key) => {
+          const unit = units[key] || {};
+          return (
+            <div key={key} className="rchip unit-chip">
+              <strong>{key}</strong>
+              <div className="unit-meta" style={{ fontSize: 12, marginTop: 4 }}>
+                {unit.active ? "online" : "idle"} | {unit.lat ? `${Number(unit.lat).toFixed(5)}, ${Number(unit.lng).toFixed(5)}` : "no location"}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </ChipRow>
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          <label className="rchip">
-            V2V Range
-            <input
-              type="number"
-              min={5}
-              max={1000}
-              step={1}
-              value={ranges.rangeV2V}
-              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2V: Number(e.target.value) }))}
-              style={{ marginLeft: 8, width: 90 }}
-            />
-          </label>
-          <label className="rchip">
-            V2I Range
-            <input
-              type="number"
-              min={10}
-              max={2000}
-              step={1}
-              value={ranges.rangeV2I}
-              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2I: Number(e.target.value) }))}
-              style={{ marginLeft: 8, width: 90 }}
-            />
-          </label>
-          <button className="submit-btn submit-user" type="button" onClick={saveRanges}>Save Ranges</button>
-        </div>
+      <ChipRow className="range-bar" style={{ marginTop: 14 }}>
+        <label className="rchip range-chip">
+          V2V Range
+          <input
+            className="range-input"
+            type="number"
+            min={5}
+            max={1000}
+            step={1}
+            value={ranges.rangeV2V}
+            onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2V: Number(e.target.value) }))}
+            style={{ marginLeft: 8, width: 90 }}
+          />
+        </label>
+        <label className="rchip range-chip">
+          V2I Range
+          <input
+            className="range-input"
+            type="number"
+            min={10}
+            max={2000}
+            step={1}
+            value={ranges.rangeV2I}
+            onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2I: Number(e.target.value) }))}
+            style={{ marginLeft: 8, width: 90 }}
+          />
+        </label>
+        <button className="submit-btn submit-user" type="button" onClick={saveRanges}>Save Ranges</button>
+      </ChipRow>
 
-        {message && <p style={{ marginTop: 10 }}>{message}</p>}
+      {message && <StatusMessage>{message}</StatusMessage>}
 
+      <TableCard>
         <div style={{ marginTop: 14, overflowX: "auto" }}>
           <table className="simple-table">
             <thead>
@@ -162,7 +161,7 @@ export default function ControlPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </main>
+      </TableCard>
+    </PageShell>
   );
 }

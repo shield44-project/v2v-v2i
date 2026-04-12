@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
+import { ChipRow, PageShell, PanelHeader, StatusMessage } from "../components/LiveBlocks";
 
 const roleCards = [
   { id: "ev", title: "Emergency Vehicle", href: "/emergency", emoji: "EV" },
@@ -11,13 +12,19 @@ const roleCards = [
   { id: "vehicle2", title: "Vehicle 2", href: "/vehicle2", emoji: "V2" }
 ];
 
+type Session = {
+  user: string;
+  isAdmin?: boolean;
+};
+
 export default function UserPortalPage() {
   const router = useRouter();
   const [scriptsReady, setScriptsReady] = useState(false);
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [v2v, setV2v] = useState(25);
   const [v2i, setV2i] = useState(50);
   const [busyRole, setBusyRole] = useState("");
+  const [message, setMessage] = useState("");
 
   const canUseLegacy = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
@@ -38,9 +45,10 @@ export default function UserPortalPage() {
     }
     setSession(s);
 
-    const onRanges = (e) => {
-      setV2v(e.detail?.v2v || 25);
-      setV2i(e.detail?.v2i || 50);
+    const onRanges = (e: Event) => {
+      const custom = e as CustomEvent<{ v2v?: number; v2i?: number }>;
+      setV2v(custom.detail?.v2v || 25);
+      setV2i(custom.detail?.v2i || 50);
     };
     document.addEventListener("rangesUpdated", onRanges);
 
@@ -53,73 +61,63 @@ export default function UserPortalPage() {
     return () => document.removeEventListener("rangesUpdated", onRanges);
   }, [canUseLegacy, router]);
 
-  const chooseRole = async (role) => {
+  const chooseRole = async (role: typeof roleCards[number]) => {
     if (!canUseLegacy || !session) return;
-    setBusyRole(role);
+    setBusyRole(role.id);
 
-    sessionStorage.setItem("v2x_role", role);
-    window.setSession?.({ role });
+    sessionStorage.setItem("v2x_role", role.id);
+    window.setSession?.({ role: role.id });
 
     try {
-      await window.db.ref("v4/sessions/" + role).set({
+      await window.db.ref("v4/sessions/" + role.id).set({
         user: session.user,
-        role,
         joinedAt: new Date().toISOString(),
-        t: (window as any).firebase.database.ServerValue.TIMESTAMP
+        active: true
       });
-    } catch (_) {
-      // Keep UX flowing even if session write fails.
+
+      setMessage("Connected as " + role.title + ". Redirecting...");
+      router.push(role.href);
+    } catch {
+      setMessage("Could not open selected module. Please try again.");
+    } finally {
+      setBusyRole("");
     }
-
-    if (role === "ev") router.push("/emergency");
-    else if (role === "signal") router.push("/signal");
-    else if (role === "vehicle1") router.push("/vehicle1");
-    else router.push("/vehicle2");
-  };
-
-  const logout = async () => {
-    window.clearSession?.();
-    await window.auth?.signOut?.().catch(() => {});
-    router.replace("/login");
   };
 
   return (
-    <main className="page">
+    <PageShell pageClassName="portal-page" cardClassName="portal-card" maxWidth={960}>
       <LegacyFirebaseScripts onReady={() => setScriptsReady(true)} />
-      <div className="card" style={{ maxWidth: 900 }}>
-        <div className="legacy-header">
-          <div>
-            <h1>Choose Your Role</h1>
-            <p>{session ? "Signed in as " + session.user : "Loading session..."}</p>
-          </div>
-          <div className="legacy-actions">
-            <button type="button" onClick={logout}>Sign Out</button>
-          </div>
-        </div>
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          <div className="rchip">V2V Zone: <strong>{v2v}m</strong></div>
-          <div className="rchip">V2I Zone: <strong>{v2i}m</strong></div>
-          <div className="rchip">Update Rate: <strong>1s</strong></div>
-        </div>
+      <PanelHeader
+        title="User Portal"
+        subtitle={session ? "Signed in as: " + session.user : "Loading user session..."}
+        actions={<button type="button" onClick={() => router.push("/login")}>Back to Login</button>}
+      />
 
-        <div className="routes" style={{ marginTop: 14 }}>
-          {roleCards.map((role) => (
-            <button
-              key={role.id}
-              className="tile-button"
-              type="button"
-              onClick={() => chooseRole(role.id)}
-              disabled={!session || busyRole.length > 0}
-            >
-              <strong>{role.emoji} {role.title}</strong>
-              <div style={{ fontSize: 12, marginTop: 4 }}>
-                {busyRole === role.id ? "Connecting..." : "Open module route " + role.href}
-              </div>
-            </button>
-          ))}
-        </div>
+      <ChipRow className="chip-grid" style={{ marginTop: 14 }}>
+        <div className="rchip">V2V Range: <strong>{v2v}m</strong></div>
+        <div className="rchip">V2I Range: <strong>{v2i}m</strong></div>
+        <div className="rchip">Session: <strong>{session?.user || "-"}</strong></div>
+      </ChipRow>
+
+      {message && <StatusMessage>{message}</StatusMessage>}
+
+      <div className="routes role-grid" style={{ marginTop: 14 }}>
+        {roleCards.map((role) => (
+          <button
+            key={role.id}
+            className="rchip role-card"
+            type="button"
+            onClick={() => chooseRole(role)}
+            disabled={!session || busyRole.length > 0}
+          >
+            <strong>{role.emoji} {role.title}</strong>
+            <div className="role-meta" style={{ fontSize: 12, marginTop: 4 }}>
+              {busyRole === role.id ? "Connecting..." : "Open module route " + role.href}
+            </div>
+          </button>
+        ))}
       </div>
-    </main>
+    </PageShell>
   );
 }

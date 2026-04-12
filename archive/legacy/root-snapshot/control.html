@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>V2X Control Center v6.5 — Advanced GPS & Satellite Maps</title>
+<title>V2X Control Center archive — Advanced GPS & Satellite Maps</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 <style>
+<link rel="stylesheet" href="../archive-theme.css">
 /* INSTANT AUTH GUARD — body hidden by default, made visible by inline script only if admin */
 body{visibility:var(--body-vis,hidden)}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -204,7 +205,7 @@ input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer;height:4px}
 
 <div class="topbar">
   <h1>🎛️ V2X CONTROL CENTER v6</h1>
-  <div class="live-txt"><div class="live-dot"></div>LIVE</div>
+  <div class="live-txt"><div class="live-dot"></div>ARCHIVED</div>
   <span id="uc">0/4 online</span>
   <span style="font-size:.6rem;color:var(--red);font-family:'Share Tech Mono';padding:3px 8px;border-radius:6px;background:rgba(255,34,51,.1);border:1px solid rgba(255,34,51,.2)" id="adminBadge">🔐 ADMIN</span>
   <button class="tbtn track" id="trackBtn" onclick="toggleTrack()">📍 Track EV</button>
@@ -276,7 +277,7 @@ input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer;height:4px}
 
     <!-- ANALYTICS PANEL -->
     <div class="panel" id="p-ana">
-      <div class="ana-hdr">LIVE METRICS</div>
+      <div class="ana-hdr">ARCHIVED METRICS</div>
       <div class="stat-grid">
         <div class="stat"><div class="si">🚦</div><div class="sv" id="sv2i" style="color:#0d6">0</div><div class="sl">V2I Events</div></div>
         <div class="stat"><div class="si">🚗</div><div class="sv" id="sv2v" style="color:#fa0">0</div><div class="sl">V2V Yields</div></div>
@@ -450,7 +451,7 @@ input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer;height:4px}
   </div>
 </div>
 
-<div class="foot">🎓 V2X Emergency Clearance System v6.0 · Firebase Auth · Leaflet/OSM · Real GPS · Vincenty GPS · Silk Board Junction</div>
+<div class="foot">🎓 V2X Emergency Clearance System archive · Firebase Auth · Leaflet/OSM · Real GPS · Vincenty GPS · Silk Board Junction</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -774,13 +775,13 @@ auth.onAuthStateChanged(async user => {
 let allUsersCache = {};
 let allAdminsCache = {};
 
-// Listen to /v4/users in real-time
+// Listen to /v4/users for archived session data
 db.ref('v4/users').on('value', snap => {
   allUsersCache = snap.val() || {};
   renderUsers(document.getElementById('usersFilter').value);
 });
 
-// Listen to /v4/admins in real-time
+// Listen to /v4/admins for archived session data
 db.ref('v4/admins').on('value', snap => {
   allAdminsCache = snap.val() || {};
   renderUsers(document.getElementById('usersFilter').value);

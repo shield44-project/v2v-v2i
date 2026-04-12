@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V2X Connect v7.0 | admin.html | Dedicated Admin Management Panel -->
+<!-- V2X Connect archive snapshot | admin.html | Dedicated Admin Management Panel -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://www.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
+<link rel="stylesheet" href="../archive-theme.css">
 /* ZERO-FLASH: hide entire page until admin verified */
 html{display:none}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -212,7 +213,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);overflow-x:hidden}
     <div class="logo-icon">🔐</div>
     <div class="logo-text">
       <h1>ADMIN PANEL</h1>
-      <p id="adminLabel">V2X Connect v7.0 · User Management</p>
+      <p id="adminLabel">V2X Connect archive · User Management</p>
     </div>
   </div>
   <div class="topbar-actions">
@@ -349,7 +350,7 @@ auth.onAuthStateChanged(async user => {
     const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
     document.getElementById('adminBadge').textContent = (isSuperAdmin ? '⭐ ' : '🔐 ') + name;
     document.getElementById('adminLabel').textContent =
-      'V2X Connect v7.0 · ' + (isSuperAdmin ? 'Super Admin' : 'Admin') + ' Panel';
+      'V2X Connect archive · ' + (isSuperAdmin ? 'Super Admin' : 'Admin') + ' Panel';
     setSession({ user: name, email: user.email, uid: user.uid, isAdmin: true });
   } else {
     const s = getSession();

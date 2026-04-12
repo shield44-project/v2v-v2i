@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>🚨 Emergency Vehicle — V2X v6</title>
-<meta name="description" content="Emergency Vehicle node — V2X Connect v6.0 with Kalman GPS smoothing">
+<meta name="description" content="Archived emergency vehicle node for the V2X Connect system with Kalman GPS smoothing.">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -96,6 +96,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:#d0c8e8;min-heigh
 .overlay p{color:#556;font-size:.82rem;line-height:1.6;margin-bottom:22px}
 .overlay button{padding:12px 28px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer}
 </style>
+<link rel="stylesheet" href="../archive-theme.css">
 </head>
 <body>
 <div class="siren" id="siren"></div>
@@ -111,7 +112,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:#d0c8e8;min-heigh
 
 <div class="hdr">
   <h1>🚨 EMERGENCY VEHICLE</h1>
-  <p id="hdrSub">V2X v6.0 · Kalman GPS · Vincenty Distance</p>
+  <p id="hdrSub">V2X archive · Kalman GPS · Vincenty Distance</p>
   <div class="hdr-user">
     <button class="logout-chip" id="logoutChip" onclick="logoutSession()">⏏ Sign Out</button>
   </div>
@@ -174,7 +175,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:#d0c8e8;min-heigh
 <!-- Log -->
 <div style="padding:0 12px 5px;font-size:.5rem;color:var(--dim);letter-spacing:2px;font-weight:700">📜 EV LOG</div>
 <div class="lbox" id="lbox"></div>
-<div class="foot">🚨 Emergency Vehicle v6.0 · Kalman GPS · Vincenty Distance · Firebase Auth</div>
+<div class="foot">🚨 Emergency Vehicle archive · Kalman GPS · Vincenty Distance · Firebase snapshot</div>
 
 <div class="overlay" id="gpserr">
   <h2>📵 GPS REQUIRED</h2>

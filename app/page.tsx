@@ -1,4 +1,5 @@
 const routes = [
+  { href: "/archive", label: "Archive Library" },
   { href: "/login", label: "Login Gateway" },
   { href: "/user-portal", label: "Role Hub" },
   { href: "/control", label: "Control Center" },

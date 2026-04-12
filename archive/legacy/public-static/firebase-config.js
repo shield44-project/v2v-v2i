@@ -22,7 +22,7 @@ const auth = firebase.auth();
 // ================================================================
 //  ADMIN SYSTEM — DB-powered (no hardcoded emails except super admin)
 //
-//  SUPER ADMIN : vishal797577@gmail.com
+//  SUPER ADMIN : superadmin@example.com
 //    → Seeded automatically into /v4/admins on first login
 //    → Can never be removed
 //    → Can promote any Google-signed-in user to admin
@@ -33,10 +33,10 @@ const auth = firebase.auth();
 //  USERS  : stored in /v4/users/{uid}
 //    { email, name, photo, role, status, lastSeen, joinedAt }
 // ================================================================
-const SUPER_ADMIN_EMAIL = 'vishal797577@gmail.com'; // ← your Gmail
+const SUPER_ADMIN_EMAIL = 'superadmin@example.com';
 
-// Demo fallback (works even without Firebase Auth configured)
-const FALLBACK_ADMIN = { user: 'admin', pass: 'V2X@2024' };
+// Demo fallback disabled in archive snapshots to avoid shipping credentials.
+const FALLBACK_ADMIN = null;
 
 // ── DETECTION RANGES ──────────────────────────────────────────
 let RANGE_V2V = 25;
