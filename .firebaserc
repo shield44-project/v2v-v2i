@@ -1,8 +1,5 @@
 {
   "projects": {
-    "default": "v2v-v2i",
-    "staging": "v2v-v2i"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "v2v-v2i-project"
+  }
 }
