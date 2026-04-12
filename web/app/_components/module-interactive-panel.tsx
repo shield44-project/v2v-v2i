@@ -24,6 +24,14 @@ type UnitState = {
 };
 
 const BASE_COORDS = { lat: 12.918, lng: 77.6205 };
+const ADMIN_SLUGS = ["admin", "admin-preview"] as const;
+const TABS: DashboardTab[] = ["overview", "dashboard", "gps", "map"];
+const TAB_LABELS: Record<DashboardTab, string> = {
+  overview: "Overview",
+  dashboard: "Dashboard",
+  gps: "GPS",
+  map: "Map",
+};
 
 const DEFAULT_UNITS: UnitState[] = [
   {
@@ -244,7 +252,9 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     return rows.filter((row) => row.module.toLowerCase().includes(q));
   }, [search, units]);
 
-  const isAdminReviewModule = slug === "admin" || slug === "admin-preview";
+  const isAdminReviewModule = ADMIN_SLUGS.includes(
+    slug as (typeof ADMIN_SLUGS)[number],
+  );
   const mapSrc = buildMapSrc(mapLayer, selectedUnitData.lat, selectedUnitData.lng);
 
   return (
@@ -252,7 +262,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-zinc-100">Live Module Tools</h2>
         <div className="flex flex-wrap gap-2">
-          {(["overview", "dashboard", "gps", "map"] as const).map((tab) => (
+          {TABS.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -263,7 +273,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === "dashboard" ? "Dashboard" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {TAB_LABELS[tab]}
             </button>
           ))}
         </div>
