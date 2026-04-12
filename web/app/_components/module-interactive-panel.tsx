@@ -26,6 +26,9 @@ type UnitState = {
 const BASE_COORDS = { lat: 12.918, lng: 77.6205 };
 const ADMIN_SLUGS = ["admin", "admin-preview"] as const;
 const TABS: DashboardTab[] = ["overview", "dashboard", "gps", "map"];
+const MIN_ACCURACY = 3;
+const DEFAULT_ACCURACY = 8;
+const MAX_ACCURACY = 30;
 const TAB_LABELS: Record<DashboardTab, string> = {
   overview: "Overview",
   dashboard: "Dashboard",
@@ -111,6 +114,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
 
   const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const geoWatchRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
   const tickRef = useRef(0);
 
   const selectedUnitData = useMemo(
@@ -147,7 +151,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                   ...unit,
                   lat: latitude,
                   lng: longitude,
-                  accuracy: Math.max(3, Math.min(accuracy || 8, 30)),
+                  accuracy: Math.max(
+                    MIN_ACCURACY,
+                    Math.min(accuracy || DEFAULT_ACCURACY, MAX_ACCURACY),
+                  ),
                   confidence: 95,
                   gpsLock: true,
                 }
@@ -163,9 +170,14 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
 
     if (geoWatchRef.current !== null) {
       navigator.geolocation.clearWatch(geoWatchRef.current);
+      geoWatchRef.current = null;
     }
 
-    geoWatchRef.current = navigator.geolocation.watchPosition(
+    if (!mountedRef.current) {
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         setUnits((prev) =>
@@ -175,7 +187,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                   ...unit,
                   lat: latitude,
                   lng: longitude,
-                  accuracy: Math.max(3, Math.min(accuracy || 8, 30)),
+                  accuracy: Math.max(
+                    MIN_ACCURACY,
+                    Math.min(accuracy || DEFAULT_ACCURACY, MAX_ACCURACY),
+                  ),
                   confidence: 96,
                   gpsLock: true,
                 }
@@ -188,6 +203,12 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 2000 },
     );
+
+    if (mountedRef.current) {
+      geoWatchRef.current = watchId;
+    } else {
+      navigator.geolocation.clearWatch(watchId);
+    }
   }, []);
 
   useEffect(() => {
@@ -208,7 +229,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             70,
             Math.min(99, unit.confidence + drift(t * 0.2, 1.2)),
           );
-          const accuracy = Math.max(3, Math.min(22, unit.accuracy + drift(t * 0.28, 0.4)));
+          const accuracy = Math.max(
+            MIN_ACCURACY,
+            Math.min(22, unit.accuracy + drift(t * 0.28, 0.4)),
+          );
 
           return {
             ...unit,
@@ -225,6 +249,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     }, 1000);
 
     return () => {
+      mountedRef.current = false;
       if (simulationTimerRef.current) {
         clearInterval(simulationTimerRef.current);
         simulationTimerRef.current = null;

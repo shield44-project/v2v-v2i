@@ -50,6 +50,7 @@ In Vercel Project → Settings → Environment Variables, add:
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
 - `NEXTAUTH_URL=https://<your-vercel-domain>`
+- `SUPER_ADMIN_EMAIL=kstejas2718@gmail.com`
 
 For local `.env.local` in `web/` add same keys with localhost URL.
 
@@ -126,8 +127,9 @@ create index if not exists idx_users_status on users(status);
 - **user:** normal authenticated user
 - **banned:** blocked access
 
-Recommended super admin email:
-- `vishal797577@gmail.com` (change if needed)
+Recommended super admin configuration:
+- Set `SUPER_ADMIN_EMAIL=kstejas2718@gmail.com` in Vercel env vars (and local `.env.local`)
+- Read this value server-side; do not hardcode privileged emails in source files
 
 ---
 

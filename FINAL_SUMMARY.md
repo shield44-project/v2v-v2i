@@ -94,7 +94,7 @@ adminMgr.on('admins-updated', (e) => updateUI(adminMgr.getStats()));
 | **Ban Users** | ✅ | admin.html → "All Users" → Ban button |
 | **Unban Users** | ✅ | admin.html → Filter "Banned" → Unban |
 | **Pending Invites** | ✅ | Auto-promote on first Google login |
-| **Super Admin Protection** | ✅ | Cannot remove vishal797577@gmail.com |
+| **Super Admin Protection** | ✅ | Cannot remove kstejas2718@gmail.com |
 | **Real-time Sync** | ✅ | Changes appear instantly across tabs |
 | **User Search/Filter** | ✅ | Search by name/email, filter by role |
 

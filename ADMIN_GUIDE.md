@@ -83,7 +83,7 @@ v4/
 3. Confirm the action
 
 **Restrictions:**
-- Cannot remove Super Admin (vishal797577@gmail.com)
+- Cannot remove Super Admin (kstejas2718@gmail.com)
 - Revoked admins become regular users
 - Can be re-promoted anytime
 
@@ -204,7 +204,7 @@ After all optimizations:
 
 1. **Super Admin Email** (hardcoded fallback)
    ```javascript
-   const SUPER_ADMIN_EMAIL = 'vishal797577@gmail.com';
+   const SUPER_ADMIN_EMAIL = 'kstejas2718@gmail.com';
    ```
    - Seeded automatically into `/v4/admins` on first login
    - Cannot be removed, cannot be banned
