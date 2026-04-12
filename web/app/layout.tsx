@@ -4,6 +4,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "V2X Connect",
   description: "Secure V2X dashboard with Vercel + Google sign-in",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({

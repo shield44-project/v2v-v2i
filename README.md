@@ -64,5 +64,13 @@ Open `http://localhost:3000`.
   - `X-Content-Type-Options: nosniff`
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` hardening
-  - `Strict-Transport-Security`
+- `Strict-Transport-Security`
 - No Firebase client keys in active runtime.
+
+## 5) Root markdown note
+
+Several root-level markdown files describe legacy static HTML (`*.html`) flows from earlier iterations.
+The actively deployed website is the Next.js app in `./web`.
+
+For current map work tracking and next map implementation steps, use:
+- `MAPS_TODO.md`

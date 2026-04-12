@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getModuleBySlug } from "@/app/modules";
+import ModuleInteractivePanel from "@/app/_components/module-interactive-panel";
 
 type ModulePageProps = {
   slug: string;
@@ -51,10 +52,14 @@ export default async function ModulePage({ slug }: ModulePageProps) {
             </span>
           ))}
         </div>
-        <button className="btn-primary mt-8 cursor-pointer" type="button">
+        <a className="btn-primary mt-8 inline-flex cursor-pointer" href="#module-live-tools">
           {moduleInfo.primaryAction}
-        </button>
+        </a>
       </section>
+
+      <div id="module-live-tools">
+        <ModuleInteractivePanel slug={moduleInfo.slug} title={moduleInfo.title} />
+      </div>
     </main>
   );
 }
