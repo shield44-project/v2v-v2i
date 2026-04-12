@@ -9,15 +9,14 @@
 //  Cache Invalidation: Change VERSION to force re-cache
 // ================================================================
 
-const VERSION = 'v2x-2024-04-10';
-const OFFLINE_URL = '/index.html';
+const VERSION = 'v2x-next-2026-04-12';
+const OFFLINE_URL = '/login';
 
 // Assets to cache on service worker install
 const STATIC_CACHE = [
-  '/', '/index.html', '/login.html', '/admin.html', '/control.html',
-  '/emergency.html', '/signal.html', '/vehicle1.html', '/vehicle2.html',
-  '/user-portal.html',
-  '/firebase-config.js', '/intersection-widget.js', '/sw.js',
+  '/', '/login', '/admin', '/admin-preview', '/control',
+  '/emergency', '/signal', '/vehicle1', '/vehicle2', '/user-portal',
+  '/sw.js',
 ];
 
 const GOOGLE_FONTS = [
@@ -187,4 +186,4 @@ self.addEventListener('message', e => {
   }
 });
 
-console.log('[SW] V2X Service Worker v1.0 installed');
+console.log('[SW] V2X Service Worker (Next routes) installed');

@@ -13,7 +13,7 @@ Because this app uses Firebase Auth in the browser, add your Vercel domain to Fi
 1. Open Firebase Console
 2. Go to Authentication -> Settings -> Authorized domains
 3. Add:
-   - `<your-project>.vercel.app`
+   - `v2x-v2i.vercel.app`
    - Your custom production domain (if any)
 
 Without this, Google sign-in can fail with auth domain errors.
@@ -21,7 +21,7 @@ Without this, Google sign-in can fail with auth domain errors.
 If you see `auth/unauthorized-domain`, this is the fix:
 
 - Firebase Console -> Authentication -> Settings -> Authorized domains
-- Add the exact Vercel host serving your app (for example `v2v-v2i-project.vercel.app`)
+- Add the exact Vercel host serving your app (`v2x-v2i.vercel.app`)
 - Add your custom domain host too, if configured
 - Do not include protocol (`https://`) or path
 

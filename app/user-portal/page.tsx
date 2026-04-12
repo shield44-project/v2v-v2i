@@ -65,7 +65,7 @@ export default function UserPortalPage() {
         user: session.user,
         role,
         joinedAt: new Date().toISOString(),
-        t: window.firebase.database.ServerValue.TIMESTAMP
+        t: (window as any).firebase.database.ServerValue.TIMESTAMP
       });
     } catch (_) {
       // Keep UX flowing even if session write fails.

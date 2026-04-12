@@ -1,4 +1,6 @@
 class KalmanFilter1D {
+  [key: string]: any;
+
   constructor(processNoise = 0.01, measurementNoise = 2.0) {
     this.q = processNoise;
     this.r = measurementNoise;
@@ -39,6 +41,8 @@ function haversineMeters(lat1, lng1, lat2, lng2) {
 }
 
 export class AdvancedGPSTracker {
+  [key: string]: any;
+
   constructor(options = {}) {
     this.options = {
       kalmanQ: 0.008,

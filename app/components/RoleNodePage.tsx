@@ -139,7 +139,7 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
             return;
           }
 
-          const next = {
+          const next: any = {
             lat: filtered.lat,
             lng: filtered.lng,
             accuracy: filtered.accuracy,
@@ -149,7 +149,7 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
             kalmanGain: filtered.kalmanGain,
             active: true,
             timestamp: new Date().toISOString(),
-            t: window.firebase.database.ServerValue.TIMESTAMP
+            t: (window as any).firebase.database.ServerValue.TIMESTAMP
           };
 
           if (isEmergency) next.type = vehicleTypeRef.current;
@@ -209,7 +209,7 @@ export default function RoleNodePage({ nodeKey, title, isEmergency = false, isSi
       await window.db.ref("v4/signal").update({
         state: nextState,
         updatedAt: new Date().toISOString(),
-        t: window.firebase.database.ServerValue.TIMESTAMP
+        t: (window as any).firebase.database.ServerValue.TIMESTAMP
       });
     } catch (_) {
       // Keep local state while offline.

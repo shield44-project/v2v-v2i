@@ -9,10 +9,10 @@ const unitKeys = ["emergency", "signal", "vehicle1", "vehicle2"];
 export default function ControlPage() {
   const router = useRouter();
   const [scriptsReady, setScriptsReady] = useState(false);
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any>(null);
   const [ranges, setRanges] = useState({ rangeV2V: 25, rangeV2I: 50 });
-  const [events, setEvents] = useState([]);
-  const [units, setUnits] = useState({});
+  const [events, setEvents] = useState<any[]>([]);
+  const [units, setUnits] = useState<Record<string, any>>({});
   const [message, setMessage] = useState("");
 
   const canUseLegacy = useMemo(() => {
@@ -52,7 +52,7 @@ export default function ControlPage() {
     const eventsRef = window.db.ref("v4/events").limitToLast(25);
     const eventsHandler = eventsRef.on("value", (snap) => {
       const value = snap.val() || {};
-      const list = Object.values(value)
+      const list = (Object.values(value) as any[])
         .sort((a, b) => String(b.timestamp || "").localeCompare(String(a.timestamp || "")))
         .slice(0, 25);
       setEvents(list);
@@ -79,7 +79,7 @@ export default function ControlPage() {
         rangeV2I: v2i
       });
       setMessage("Ranges updated.");
-    } catch (err) {
+    } catch (err: any) {
       setMessage(err?.message || "Failed to update ranges.");
     }
   };
@@ -121,7 +121,7 @@ export default function ControlPage() {
               max={1000}
               step={1}
               value={ranges.rangeV2V}
-              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2V: e.target.value }))}
+              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2V: Number(e.target.value) }))}
               style={{ marginLeft: 8, width: 90 }}
             />
           </label>
@@ -133,7 +133,7 @@ export default function ControlPage() {
               max={2000}
               step={1}
               value={ranges.rangeV2I}
-              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2I: e.target.value }))}
+              onChange={(e) => setRanges((prev) => ({ ...prev, rangeV2I: Number(e.target.value) }))}
               style={{ marginLeft: 8, width: 90 }}
             />
           </label>

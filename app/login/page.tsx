@@ -6,6 +6,19 @@ import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
 
 const SUPER_ADMIN_EMAIL = "vishal797577@gmail.com";
 
+function formatAuthError(err) {
+  const code = err?.code || "";
+  const host = typeof window !== "undefined" ? window.location.hostname : "this-host";
+  if (code === "auth/unauthorized-domain") {
+    return (
+      "Google sign-in blocked for domain '" +
+      host +
+      "'. Add this host in Firebase Console -> Authentication -> Settings -> Authorized domains, then reload."
+    );
+  }
+  return err?.message || "Google sign-in failed";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [scriptsReady, setScriptsReady] = useState(false);
@@ -16,11 +29,18 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [alreadyIn, setAlreadyIn] = useState(null);
+  const [hostLabel, setHostLabel] = useState("");
 
   const canUseFirebase = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
     return !!(window.auth && window.firebase && window.getSession && window.setSession);
   }, [scriptsReady]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setHostLabel(window.location.hostname || "localhost");
+    }
+  }, []);
 
   useEffect(() => {
     if (!canUseFirebase) return;
@@ -91,12 +111,12 @@ export default function LoginPage() {
     setBusy(true);
     setMessage("");
     try {
-      const provider = new window.firebase.auth.GoogleAuthProvider();
+      const provider = new (window as any).firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await window.auth.signInWithPopup(provider);
       if (result?.user) await completeGoogleSignIn(result.user, true);
     } catch (err) {
-      setMessage(err?.message || "Google sign-in failed");
+      setMessage(formatAuthError(err));
     } finally {
       setBusy(false);
     }
@@ -180,6 +200,11 @@ export default function LoginPage() {
       <div className="card" style={{ maxWidth: 640 }}>
         <h1>V2X Login</h1>
         <p>Native Next.js login page using your existing Firebase and session model.</p>
+        {hostLabel && (
+          <p style={{ marginTop: 8 }}>
+            <strong>Current Host:</strong> {hostLabel}
+          </p>
+        )}
 
         {!scriptsReady && <p>Loading Firebase scripts and auth bridge...</p>}
 

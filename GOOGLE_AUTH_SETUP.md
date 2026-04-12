@@ -55,9 +55,8 @@ Also ensure `localhost` is in Firebase Authorized Domains:
 If Google login fails on Vercel with `auth/unauthorized-domain`, add your deployed domain in Firebase:
 
 1. Open Firebase Console -> Authentication -> Settings -> Authorized domains
-2. Add your Vercel production URL host, for example:
-  - `v2v-v2i-project.vercel.app`
-  - or your actual generated host such as `your-app-name.vercel.app`
+2. Add your Vercel production URL host:
+  - `v2x-v2i.vercel.app`
 3. Add your custom domain too (if used), for example `app.example.com`
 4. Save and redeploy/reload your app
 
@@ -125,7 +124,7 @@ Live URL: **https://v2v-v2i-project.web.app**
 |-------|-----|
 | `auth/operation-not-allowed` | Enable Google in Firebase Console → Authentication |
 | `auth/configuration-not-found` | Same as above |
-| `auth/unauthorized-domain` | Add your Vercel host in Firebase Authentication -> Settings -> Authorized domains (and use `localhost` for local dev) |
+| `auth/unauthorized-domain` | Add `v2x-v2i.vercel.app` in Firebase Authentication -> Settings -> Authorized domains (and use `localhost` for local dev) |
 | `auth/popup-blocked` | Allow popups — code auto-falls back to redirect |
 | User not getting admin | Sign in with Google first, then promote in Control Center |
 | Super admin not auto-seeded | Make sure you sign in with `vishal797577@gmail.com` exactly |

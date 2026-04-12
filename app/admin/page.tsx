@@ -7,11 +7,11 @@ import LegacyFirebaseScripts from "../components/LegacyFirebaseScripts";
 export default function AdminPage() {
   const router = useRouter();
   const [scriptsReady, setScriptsReady] = useState(false);
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [message, setMessage] = useState("");
   const [stats, setStats] = useState({ users: 0, admins: 0, banned: 0, pending: 0 });
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   const canUseLegacy = useMemo(() => {
     if (!scriptsReady || typeof window === "undefined") return false;
@@ -42,7 +42,7 @@ export default function AdminPage() {
       ref.on("value", (snap) => {
         const value = snap.val() || {};
         if (idx === 0) {
-          const list = Object.entries(value).map(([uid, row]) => ({ uid, ...(row || {}) }));
+          const list = Object.entries(value as Record<string, any>).map(([uid, row]) => ({ uid, ...(row || {}) }));
           setUsers(list.sort((a, b) => String(b.lastSeen || "").localeCompare(String(a.lastSeen || ""))));
           setStats((prev) => ({ ...prev, users: list.length }));
         }
@@ -57,7 +57,7 @@ export default function AdminPage() {
     };
   }, [canUseLegacy, router]);
 
-  const inviteAdmin = async (e) => {
+  const inviteAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canUseLegacy || !inviteEmail.trim()) return;
     try {
@@ -68,16 +68,16 @@ export default function AdminPage() {
       });
       setInviteEmail("");
       setMessage("Admin invite saved in pending_admins.");
-    } catch (err) {
+    } catch (err: any) {
       setMessage(err?.message || "Failed to save invite.");
     }
   };
 
-  const runAction = async (fn) => {
+  const runAction = async (fn: () => Promise<any>) => {
     try {
       await fn();
       setMessage("Action completed.");
-    } catch (err) {
+    } catch (err: any) {
       setMessage(err?.message || "Action failed.");
     }
   };

@@ -151,7 +151,9 @@ function ensureInitialized() {
     const email = String(user.email).toLowerCase();
     const pending = await db.ref("v4/pending_admins").once("value");
     const pendingObj = pending.val() || {};
-    const entry = Object.entries(pendingObj).find(([, v]) => String(v?.email || "").toLowerCase() === email);
+    const entry = Object.entries(pendingObj as Record<string, any>).find(
+      ([, v]) => String(v?.email || "").toLowerCase() === email
+    );
     if (!entry) return false;
 
     const [key] = entry;
@@ -234,10 +236,12 @@ function ensureInitialized() {
     return "Move Left";
   }
 
-  window.firebase = firebase;
-  window.db = db;
-  window.auth = auth;
-  window.DB = {
+  const w = window as any;
+
+  w.firebase = firebase;
+  w.db = db;
+  w.auth = auth;
+  w.DB = {
     emergency: db.ref("v4/emergency"),
     signal: db.ref("v4/signal"),
     vehicle1: db.ref("v4/vehicle1"),
@@ -249,31 +253,31 @@ function ensureInitialized() {
     users: db.ref("v4/users")
   };
 
-  window.checkIsAdmin = checkIsAdmin;
-  window.registerUser = registerUser;
-  window.seedSuperAdmin = seedSuperAdmin;
-  window.promoteToAdmin = promoteToAdmin;
-  window.demoteAdmin = demoteAdmin;
-  window.banUser = banUser;
-  window.unbanUser = unbanUser;
-  window.removeUser = removeUser;
-  window.checkAndApplyPendingInvite = checkAndApplyPendingInvite;
-  window.checkBanned = checkBanned;
-  window.isAdminSync = isAdminSync;
-  window.getSession = getSession;
-  window.setSession = setSession;
-  window.clearSession = clearSession;
-  window.requireAuth = requireAuth;
-  window.requireAdmin = requireAdmin;
-  window.logoutSession = logoutSession;
-  window.getRoleUrl = getRoleUrl;
-  window.getRangeConfig = getRangeConfig;
-  window.haversine = haversine;
-  window.getBearing = getBearing;
-  window.bearingToDir = bearingToDir;
-  window.getYieldSide = getYieldSide;
+  w.checkIsAdmin = checkIsAdmin;
+  w.registerUser = registerUser;
+  w.seedSuperAdmin = seedSuperAdmin;
+  w.promoteToAdmin = promoteToAdmin;
+  w.demoteAdmin = demoteAdmin;
+  w.banUser = banUser;
+  w.unbanUser = unbanUser;
+  w.removeUser = removeUser;
+  w.checkAndApplyPendingInvite = checkAndApplyPendingInvite;
+  w.checkBanned = checkBanned;
+  w.isAdminSync = isAdminSync;
+  w.getSession = getSession;
+  w.setSession = setSession;
+  w.clearSession = clearSession;
+  w.requireAuth = requireAuth;
+  w.requireAdmin = requireAdmin;
+  w.logoutSession = logoutSession;
+  w.getRoleUrl = getRoleUrl;
+  w.getRangeConfig = getRangeConfig;
+  w.haversine = haversine;
+  w.getBearing = getBearing;
+  w.bearingToDir = bearingToDir;
+  w.getYieldSide = getYieldSide;
 
-  window.__v2xBridgeReady = true;
+  w.__v2xBridgeReady = true;
   return true;
 }
 
