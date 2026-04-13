@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/auth";
 import { moduleDefinitions } from "@/app/modules";
 
@@ -35,22 +36,40 @@ export default async function Home() {
         className="hero-glow scanline-wrap animate-fade-in-up rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl"
         style={{ animationDelay: "60ms" }}
       >
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-          Real-time V2V · V2I · GPS
-        </p>
-        <h1 className="text-gradient mt-3 text-3xl font-bold sm:text-5xl">
-          Main Platform Index
-        </h1>
-        <p className="mt-4 max-w-3xl text-zinc-300">
-          Monitor emergency operations, route coordination, and authenticated
-          access from one main website entry point.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-4">
-          {session?.user ? (
-            <Link className="btn-primary" href="/dashboard">Open Dashboard</Link>
-          ) : (
-            <Link className="btn-primary" href="/signin">Sign in</Link>
-          )}
+        <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Real-time V2V · V2I · GPS · AI Guidance
+            </p>
+            <h1 className="text-gradient mt-3 text-3xl font-bold sm:text-5xl">
+              Main Platform Index
+            </h1>
+            <p className="mt-4 max-w-3xl text-zinc-300">
+              Monitor emergency operations, route coordination, and authenticated
+              access from one main website entry point.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              {session?.user ? (
+                <Link className="btn-primary" href="/dashboard">Open Dashboard</Link>
+              ) : (
+                <Link className="btn-primary" href="/signin">Sign in</Link>
+              )}
+            </div>
+          </div>
+          <div className="animate-fade-in-up hidden lg:block">
+            <Image
+              src="/ai-orb.svg"
+              alt="AI V2X guidance visual"
+              width={180}
+              height={180}
+              priority
+              className="rounded-2xl border border-cyan-500/20 bg-black/30"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs text-cyan-100 lg:hidden">
+          <Image src="/ai-orb.svg" alt="" aria-hidden width={36} height={36} className="rounded-md border border-cyan-500/20" />
+          <span>AI copilot is active on module pages for risk scoring and yield recommendations.</span>
         </div>
         <div className="mt-8 rounded-xl border border-zinc-800 bg-black p-4 text-sm text-zinc-300">
           <strong className="text-zinc-200">Status:</strong>{" "}

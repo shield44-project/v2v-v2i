@@ -19,6 +19,7 @@ import {
   predictFuturePosition,
   vincentyDistanceMeters,
 } from "@/lib/v2x/geodesy";
+import { generateV2XAiInsights, type AiRiskLevel } from "@/lib/v2x/risk-model";
 import type { NodeRole, RealtimeSnapshot, SignalDirection, VehicleType } from "@/lib/v2x/types";
 import type { MapMode } from "@/app/_components/live-map";
 
@@ -90,6 +91,10 @@ function triggerVibration(): void {
 
 function compactTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour12: false });
+}
+
+function formatRiskLabel(score: number, level: AiRiskLevel): string {
+  return `${score.toFixed(0)}/100 · ${level.toUpperCase()}`;
 }
 
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
@@ -183,6 +188,20 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   );
 
   const evDirection = headingToDirection(emergencyNode.heading);
+  const aiInsights = useMemo(
+    () =>
+      generateV2XAiInsights(
+        snapshot,
+        civilianMetrics.map((metric) => ({
+          id: metric.id,
+          label: metric.label,
+          distanceMeters: metric.distance,
+          approaching: metric.approaching,
+        })),
+        evToSignalDistance,
+      ),
+    [civilianMetrics, evToSignalDistance, snapshot],
+  );
 
   const predictedPosition = useMemo(
     () =>
@@ -590,6 +609,14 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 </div>
               ))}
             </div>
+            <div className="ai-card mt-4 rounded-lg border border-cyan-500/20 p-3">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300">AI Guidance</p>
+              <p className="mt-1 text-sm text-zinc-200">{aiInsights.overall.recommendation}</p>
+              <p className="mt-1 text-xs text-zinc-400">
+                Confidence {aiInsights.overall.confidence.toFixed(0)}% ·{" "}
+                {aiInsights.overall.etaSeconds === null ? "ETA n/a" : `Signal ETA ${aiInsights.overall.etaSeconds}s`}
+              </p>
+            </div>
           </article>
         </div>
       )}
@@ -640,6 +667,14 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               </div>
             ))}
           </div>
+          <div className="ai-card mt-4 rounded-lg border border-cyan-500/20 p-3 text-sm">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300">AI Signal Copilot</p>
+            <p className="mt-1 text-zinc-200">
+              Risk score <span className="font-semibold text-cyan-300">{aiInsights.overall.score.toFixed(0)}</span>/100 ·{" "}
+              {aiInsights.summary}
+            </p>
+            <p className="mt-1 text-zinc-400">{aiInsights.overall.recommendation}</p>
+          </div>
           <p className="mt-4 text-xs text-zinc-600">
             Override triggers when EV is within 50 m or predicted within 50 m (5 s ahead) — approaching check active.
           </p>
@@ -680,17 +715,19 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           {/* Safety status */}
           {civilianMetrics
             .filter((m) => m.id === role)
-            .map((metric) => (
-              <article
-                key={metric.id}
-                className={`animate-slide-in-right rounded-xl border p-4 transition ${
-                  metric.alert25
-                    ? "warning-card animate-warning-pulse"
-                    : metric.alert50
-                      ? "border-yellow-500/40 bg-yellow-500/5"
-                      : "border-zinc-800 bg-zinc-950"
-                }`}
-              >
+            .map((metric) => {
+              const vehicleInsight = aiInsights.perVehicle[metric.id];
+              return (
+                <article
+                  key={metric.id}
+                  className={`animate-slide-in-right rounded-xl border p-4 transition ${
+                    metric.alert25
+                      ? "warning-card animate-warning-pulse"
+                      : metric.alert50
+                        ? "border-yellow-500/40 bg-yellow-500/5"
+                        : "border-zinc-800 bg-zinc-950"
+                  }`}
+                >
                 <h3 className="font-semibold text-zinc-100">Civilian Vehicle (V2V)</h3>
 
                 {/* Yield direction indicator */}
@@ -761,8 +798,18 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 <p className="mt-3 text-xs text-zinc-600">
                   🔊 Siren triggers at 50 m · 📳 Vibration at 25 m · Only when EV is approaching.
                 </p>
-              </article>
-            ))}
+                {vehicleInsight && (
+                  <div className="ai-card mt-3 rounded-lg border border-cyan-500/20 p-3 text-sm">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300">AI Yield Assistant</p>
+                    <p className="mt-1 text-zinc-200">
+                      Score {formatRiskLabel(vehicleInsight.score, vehicleInsight.level)}
+                    </p>
+                    <p className="mt-1 text-zinc-400">{vehicleInsight.recommendation}</p>
+                  </div>
+                )}
+                </article>
+              );
+            })}
         </div>
       )}
 
@@ -811,6 +858,29 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                   </p>
                 </div>
               ))}
+            </div>
+          </article>
+
+          <article className="ai-card rounded-xl border border-cyan-500/20 bg-zinc-950 p-4">
+            <h3 className="font-semibold text-zinc-100">AI Incident Forecast</h3>
+            <p className="mt-1 text-sm text-zinc-400">
+              Overall {aiInsights.overall.level.toUpperCase()} · Score {aiInsights.overall.score.toFixed(0)}/100 · Confidence{" "}
+              {aiInsights.overall.confidence.toFixed(0)}%
+            </p>
+            <p className="mt-2 text-sm text-zinc-300">{aiInsights.summary}</p>
+            <p className="mt-1 text-sm text-zinc-400">{aiInsights.overall.recommendation}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {civilianMetrics.map((metric) => {
+                const insight = aiInsights.perVehicle[metric.id];
+                if (!insight) return null;
+                return (
+                  <div key={`ai-${metric.id}`} className="rounded-md border border-zinc-800 bg-black/30 p-2 text-xs text-zinc-300">
+                    <p className="font-medium text-zinc-200">{metric.label}</p>
+                    <p className="mt-0.5">Risk {formatRiskLabel(insight.score, insight.level)}</p>
+                    <p className="mt-0.5 text-zinc-500">{insight.recommendation}</p>
+                  </div>
+                );
+              })}
             </div>
           </article>
 
