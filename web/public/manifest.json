@@ -1,0 +1,39 @@
+{
+  "name": "V2X Connect — Emergency Vehicle Clearance",
+  "short_name": "V2X Connect",
+  "description": "Real-time V2V/V2I emergency vehicle clearance system with GPS, signal override, and predictive routing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#00e5ff",
+  "orientation": "any",
+  "categories": ["navigation", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Control Center",
+      "short_name": "Control",
+      "url": "/control",
+      "description": "Open the V2X Control Center"
+    },
+    {
+      "name": "Emergency Module",
+      "short_name": "Emergency",
+      "url": "/emergency",
+      "description": "Activate Emergency Vehicle mode"
+    },
+    {
+      "name": "Traffic Signal",
+      "short_name": "Signal",
+      "url": "/signal",
+      "description": "View Traffic Signal status"
+    }
+  ]
+}
