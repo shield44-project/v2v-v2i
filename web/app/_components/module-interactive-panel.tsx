@@ -1,538 +1,593 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  appendLog,
+  readSnapshot,
+  subscribeRealtime,
+  updateEmergency,
+  updateSignals,
+  updateVehicle,
+} from "@/lib/v2x/realtime";
+import { KalmanFilter2D } from "@/lib/v2x/kalman";
+import {
+  bearingBetweenCoordinates,
+  headingToDirection,
+  predictFuturePosition,
+  vincentyDistanceMeters,
+} from "@/lib/v2x/geodesy";
+import type { NodeRole, RealtimeSnapshot, SignalDirection, VehicleType } from "@/lib/v2x/types";
+
+const LiveMap = dynamic(() => import("@/app/_components/live-map"), { ssr: false });
 
 type ModuleInteractivePanelProps = {
   slug: string;
   title: string;
 };
 
-type UnitId = "emergency" | "signal" | "vehicle1" | "vehicle2";
-type MapLayer = "street" | "satellite";
-type DashboardTab = "overview" | "dashboard" | "gps" | "map";
+type MapMode = "street" | "walking";
 
-type UnitState = {
-  id: UnitId;
-  label: string;
-  lat: number;
-  lng: number;
-  speed: number;
-  bearing: number;
-  confidence: number;
-  accuracy: number;
-  gpsLock: boolean;
+const ROLE_FROM_SLUG: Record<string, NodeRole> = {
+  emergency: "emergency",
+  signal: "signal",
+  vehicle1: "vehicle1",
+  vehicle2: "vehicle2",
+  admin: "admin",
+  "admin-preview": "admin",
+  control: "admin",
+  "user-portal": "admin",
 };
 
-const BASE_COORDS = { lat: 12.918, lng: 77.6205 };
-const ADMIN_SLUGS = ["admin", "admin-preview"] as const;
-const TABS: DashboardTab[] = ["overview", "dashboard", "gps", "map"];
-const MIN_ACCURACY = 3;
-const DEFAULT_ACCURACY = 8;
-const MAX_ACCURACY = 30;
-const TAB_LABELS: Record<DashboardTab, string> = {
-  overview: "Overview",
-  dashboard: "Dashboard",
-  gps: "GPS",
-  map: "Map",
-};
-
-const DEFAULT_UNITS: UnitState[] = [
-  {
-    id: "emergency",
-    label: "Emergency",
-    lat: BASE_COORDS.lat + 0.0002,
-    lng: BASE_COORDS.lng + 0.0002,
-    speed: 7.2,
-    bearing: 35,
-    confidence: 91,
-    accuracy: 5.3,
-    gpsLock: true,
-  },
-  {
-    id: "signal",
-    label: "Signal",
-    lat: BASE_COORDS.lat - 0.0003,
-    lng: BASE_COORDS.lng + 0.0001,
-    speed: 0.1,
-    bearing: 0,
-    confidence: 99,
-    accuracy: 3.2,
-    gpsLock: true,
-  },
-  {
-    id: "vehicle1",
-    label: "Vehicle 1",
-    lat: BASE_COORDS.lat + 0.0004,
-    lng: BASE_COORDS.lng - 0.0003,
-    speed: 4.9,
-    bearing: 118,
-    confidence: 87,
-    accuracy: 7.9,
-    gpsLock: true,
-  },
-  {
-    id: "vehicle2",
-    label: "Vehicle 2",
-    lat: BASE_COORDS.lat - 0.0004,
-    lng: BASE_COORDS.lng - 0.0002,
-    speed: 3.3,
-    bearing: 255,
-    confidence: 89,
-    accuracy: 6.8,
-    gpsLock: true,
-  },
-];
-
-/**
- * Produces a pseudo-random delta for smooth simulation updates.
- */
 function drift(seed: number, scale: number): number {
   return Math.sin(seed) * scale;
 }
 
-/**
- * Builds an embeddable map source URL for the selected map layer.
- */
-function buildMapSrc(layer: MapLayer, lat: number, lng: number): string {
-  if (layer === "satellite") {
-    return `https://maps.google.com/maps?q=${lat},${lng}&z=16&t=k&output=embed`;
+function signalTemplate(direction: SignalDirection) {
+  if (direction === "north" || direction === "south") {
+    return { north: "green", south: "green", east: "red", west: "red" } as const;
   }
-  return `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+
+  return { north: "red", south: "red", east: "green", west: "green" } as const;
 }
 
-/** Returns a CSS class name for an accuracy value (lower = better). */
-function accuracyClass(accuracy: number): string {
-  if (accuracy < 6) return "acc-good";
-  if (accuracy < 12) return "acc-medium";
-  return "acc-bad";
+function triggerSirenBeep(): void {
+  if (typeof window === "undefined") return;
+  const context = new AudioContext();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(880, context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 0.22);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.28);
+
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.3);
 }
 
-/** Returns a CSS class name for a confidence percentage (higher = better). */
-function confidenceClass(confidence: number): string {
-  if (confidence > 90) return "conf-good";
-  if (confidence > 80) return "conf-medium";
-  return "conf-bad";
+function getYieldSuggestion(heading: number): string {
+  const direction = headingToDirection((heading + 180) % 360);
+  return `Yield toward ${direction.toUpperCase()} edge/lane and keep intersection clear.`;
 }
 
-/**
- * Renders functional GPS, dashboard, and map controls for module pages.
- */
+function compactTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour12: false });
+}
+
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
-  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
-  const [mapLayer, setMapLayer] = useState<MapLayer>("street");
-  const [units, setUnits] = useState<UnitState[]>(DEFAULT_UNITS);
-  const [trackerStatus, setTrackerStatus] = useState("Idle");
-  const [gpsStatus, setGpsStatus] = useState("Ready");
-  const [selectedUnit, setSelectedUnit] = useState<UnitId>("emergency");
-  const [search, setSearch] = useState("");
+  const role = ROLE_FROM_SLUG[slug] ?? "admin";
+  const [snapshot, setSnapshot] = useState<RealtimeSnapshot>(() => readSnapshot());
+  const [mapMode, setMapMode] = useState<MapMode>("street");
+  const [gpsStatus, setGpsStatus] = useState("Awaiting GPS signal");
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "degraded">("connected");
 
-  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const geoWatchRef = useRef<number | null>(null);
-  const mountedRef = useRef(true);
+  const kalmanRef = useRef(new KalmanFilter2D());
+  const evRawRef = useRef({
+    latitude: snapshot.vehicles.emergency.latitude,
+    longitude: snapshot.vehicles.emergency.longitude,
+  });
   const tickRef = useRef(0);
+  const warningRef = useRef(false);
+  const signalOverrideRef = useRef<"normal" | "override">(snapshot.signals.mode);
+  const geoWatchRef = useRef<number | null>(null);
 
-  const selectedUnitData = useMemo(
-    () => units.find((unit) => unit.id === selectedUnit) ?? units[0],
-    [selectedUnit, units],
+  const emergencyNode = snapshot.vehicles.emergency;
+  const signalNode = snapshot.vehicles.signal;
+
+  const civilianNodes = useMemo(
+    () => [snapshot.vehicles.vehicle1, snapshot.vehicles.vehicle2],
+    [snapshot.vehicles.vehicle1, snapshot.vehicles.vehicle2],
   );
 
-  const averageAccuracy = useMemo(() => {
-    const sum = units.reduce((acc, unit) => acc + unit.accuracy, 0);
-    return (sum / units.length).toFixed(1);
-  }, [units]);
-
-  const initializeTrackers = useCallback(() => {
-    setTrackerStatus("GPS tracker active on 4/4 units");
-    setUnits(DEFAULT_UNITS);
-  }, []);
-
-  const useCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setGpsStatus("Geolocation is not supported in this browser.");
-      return;
-    }
-
-    setGpsStatus("Requesting location permission…");
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setGpsStatus("Live location connected.");
-        const { latitude, longitude, accuracy } = position.coords;
-        setUnits((prev) =>
-          prev.map((unit) =>
-            unit.id === "emergency"
-              ? {
-                  ...unit,
-                  lat: latitude,
-                  lng: longitude,
-                  accuracy: Math.max(
-                    MIN_ACCURACY,
-                    Math.min(accuracy || DEFAULT_ACCURACY, MAX_ACCURACY),
-                  ),
-                  confidence: 95,
-                  gpsLock: true,
-                }
-              : unit,
-          ),
+  const civilianMetrics = useMemo(
+    () =>
+      civilianNodes.map((node) => {
+        const distance = vincentyDistanceMeters(
+          node.kalmanLatitude,
+          node.kalmanLongitude,
+          emergencyNode.kalmanLatitude,
+          emergencyNode.kalmanLongitude,
         );
-      },
-      () => {
-        setGpsStatus("Location permission denied. Using simulated GPS feed.");
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 },
-    );
 
-    if (geoWatchRef.current !== null) {
-      navigator.geolocation.clearWatch(geoWatchRef.current);
-      geoWatchRef.current = null;
-    }
+        return {
+          id: node.id,
+          label: node.label,
+          distance,
+          warning: distance <= 25,
+          heading: emergencyNode.heading,
+          suggestion: getYieldSuggestion(emergencyNode.heading),
+        };
+      }),
+    [civilianNodes, emergencyNode.heading, emergencyNode.kalmanLatitude, emergencyNode.kalmanLongitude],
+  );
 
-    if (!mountedRef.current) return;
+  const nearbyCount = civilianMetrics.filter((metric) => metric.distance <= 25).length;
 
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        setUnits((prev) =>
-          prev.map((unit) =>
-            unit.id === "emergency"
-              ? {
-                  ...unit,
-                  lat: latitude,
-                  lng: longitude,
-                  accuracy: Math.max(
-                    MIN_ACCURACY,
-                    Math.min(accuracy || DEFAULT_ACCURACY, MAX_ACCURACY),
-                  ),
-                  confidence: 96,
-                  gpsLock: true,
-                }
-              : unit,
-          ),
-        );
-      },
-      () => {
-        setGpsStatus("Live watch unavailable. Continuing with simulated data.");
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 2000 },
-    );
+  const evToSignalDistance = useMemo(
+    () =>
+      vincentyDistanceMeters(
+        emergencyNode.kalmanLatitude,
+        emergencyNode.kalmanLongitude,
+        signalNode.kalmanLatitude,
+        signalNode.kalmanLongitude,
+      ),
+    [
+      emergencyNode.kalmanLatitude,
+      emergencyNode.kalmanLongitude,
+      signalNode.kalmanLatitude,
+      signalNode.kalmanLongitude,
+    ],
+  );
 
-    if (mountedRef.current) {
-      geoWatchRef.current = watchId;
-    } else {
-      navigator.geolocation.clearWatch(watchId);
-    }
+  const evDirection = headingToDirection(emergencyNode.heading);
+
+  const predictedPosition = useMemo(
+    () =>
+      predictFuturePosition(
+        emergencyNode.kalmanLatitude,
+        emergencyNode.kalmanLongitude,
+        emergencyNode.speed,
+        emergencyNode.heading,
+        5,
+      ),
+    [
+      emergencyNode.heading,
+      emergencyNode.kalmanLatitude,
+      emergencyNode.kalmanLongitude,
+      emergencyNode.speed,
+    ],
+  );
+
+  useEffect(() => {
+    const unsubscribe = subscribeRealtime((next) => setSnapshot(next));
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    initializeTrackers();
-  }, [initializeTrackers]);
+    if (typeof window === "undefined") return;
 
-  useEffect(() => {
-    simulationTimerRef.current = setInterval(() => {
-      tickRef.current += 1;
-      setUnits((prev) =>
-        prev.map((unit, index) => {
-          const t = tickRef.current + index * 3;
-          const lat = unit.lat + drift(t * 0.35, 0.00003);
-          const lng = unit.lng + drift(t * 0.31, 0.00003);
-          const speed = Math.max(0, Math.min(14, unit.speed + drift(t * 0.5, 0.35)));
-          const bearing = (unit.bearing + 2 + index) % 360;
-          const confidence = Math.max(
-            70,
-            Math.min(99, unit.confidence + drift(t * 0.2, 1.2)),
-          );
-          const accuracy = Math.max(
-            MIN_ACCURACY,
-            Math.min(22, unit.accuracy + drift(t * 0.28, 0.4)),
-          );
+    const updateConnection = () => {
+      setConnectionStatus(navigator.onLine ? "connected" : "degraded");
+    };
 
-          return { ...unit, lat, lng, speed, bearing, confidence, accuracy, gpsLock: true };
-        }),
-      );
-    }, 1000);
+    updateConnection();
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
 
     return () => {
-      mountedRef.current = false;
-      if (simulationTimerRef.current) {
-        clearInterval(simulationTimerRef.current);
-        simulationTimerRef.current = null;
-      }
-      if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-        geoWatchRef.current = null;
-      }
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
     };
   }, []);
 
-  const filteredAdminRows = useMemo(() => {
-    const rows = units.map((unit) => ({
-      key: unit.id,
-      module: unit.label,
-      state: unit.gpsLock ? "Online" : "Offline",
-      accuracy: unit.accuracy,
-      confidence: unit.confidence,
-    }));
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGpsStatus("Browser geolocation unavailable. Running simulation feed.");
+      return;
+    }
 
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) => row.module.toLowerCase().includes(q));
-  }, [search, units]);
+    setGpsStatus("Tracking live GPS feed");
+    geoWatchRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        evRawRef.current = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
 
-  const isAdminReviewModule = ADMIN_SLUGS.includes(
-    slug as (typeof ADMIN_SLUGS)[number],
-  );
-  const mapSrc = buildMapSrc(mapLayer, selectedUnitData.lat, selectedUnitData.lng);
+        updateVehicle("emergency", {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: Math.min(35, Math.max(2.5, position.coords.accuracy || 8)),
+          speed: Math.max(0, position.coords.speed ?? emergencyNode.speed),
+          heading:
+            position.coords.heading ??
+            bearingBetweenCoordinates(
+              emergencyNode.latitude,
+              emergencyNode.longitude,
+              position.coords.latitude,
+              position.coords.longitude,
+            ),
+        });
+      },
+      () => {
+        setGpsStatus("GPS permission denied, using simulated node movement.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 800 },
+    );
+
+    return () => {
+      if (geoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(geoWatchRef.current);
+      }
+    };
+  }, [emergencyNode.latitude, emergencyNode.longitude, emergencyNode.speed]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      tickRef.current += 1;
+
+      const nextEmergencyLat = evRawRef.current.latitude + drift(tickRef.current * 0.45, 0.00001);
+      const nextEmergencyLng = evRawRef.current.longitude + drift(tickRef.current * 0.41, 0.00001);
+      const kalmanPoint = snapshot.emergency.kalmanEnabled
+        ? kalmanRef.current.update({ latitude: nextEmergencyLat, longitude: nextEmergencyLng })
+        : { latitude: nextEmergencyLat, longitude: nextEmergencyLng };
+
+      updateVehicle("emergency", {
+        latitude: nextEmergencyLat,
+        longitude: nextEmergencyLng,
+        kalmanLatitude: kalmanPoint.latitude,
+        kalmanLongitude: kalmanPoint.longitude,
+        speed: Math.max(2, Math.min(22, emergencyNode.speed + drift(tickRef.current * 0.33, 0.5))),
+        heading: (emergencyNode.heading + 4 + drift(tickRef.current * 0.21, 2)) % 360,
+        broadcastEnabled: snapshot.emergency.active,
+        vehicleType: snapshot.emergency.vehicleType,
+        connectionStatus: connectionStatus === "connected" ? "connected" : "degraded",
+      });
+
+      updateVehicle("vehicle1", {
+        latitude: snapshot.vehicles.vehicle1.latitude + drift(tickRef.current * 0.24, 0.000015),
+        longitude: snapshot.vehicles.vehicle1.longitude + drift(tickRef.current * 0.19, 0.000015),
+        kalmanLatitude:
+          snapshot.vehicles.vehicle1.kalmanLatitude + drift(tickRef.current * 0.24, 0.000013),
+        kalmanLongitude:
+          snapshot.vehicles.vehicle1.kalmanLongitude + drift(tickRef.current * 0.19, 0.000013),
+        heading: (snapshot.vehicles.vehicle1.heading + 2) % 360,
+      });
+
+      updateVehicle("vehicle2", {
+        latitude: snapshot.vehicles.vehicle2.latitude + drift(tickRef.current * 0.27, 0.000013),
+        longitude: snapshot.vehicles.vehicle2.longitude + drift(tickRef.current * 0.22, 0.000013),
+        kalmanLatitude:
+          snapshot.vehicles.vehicle2.kalmanLatitude + drift(tickRef.current * 0.27, 0.000011),
+        kalmanLongitude:
+          snapshot.vehicles.vehicle2.kalmanLongitude + drift(tickRef.current * 0.22, 0.000011),
+        heading: (snapshot.vehicles.vehicle2.heading + 1.5) % 360,
+      });
+
+      const evDistance = vincentyDistanceMeters(
+        kalmanPoint.latitude,
+        kalmanPoint.longitude,
+        signalNode.kalmanLatitude,
+        signalNode.kalmanLongitude,
+      );
+
+      if (snapshot.emergency.active && evDistance <= 50) {
+        const overrideDirection = headingToDirection(emergencyNode.heading);
+        updateSignals({
+          ...signalTemplate(overrideDirection),
+          mode: "override",
+          source: "emergency",
+          overrideDirection,
+          evDistanceMeters: evDistance,
+        });
+      } else {
+        updateSignals({
+          mode: "normal",
+          source: undefined,
+          overrideDirection: undefined,
+          evDistanceMeters: evDistance,
+          north: "green",
+          south: "green",
+          east: "red",
+          west: "red",
+        });
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [
+    connectionStatus,
+    emergencyNode.heading,
+    emergencyNode.speed,
+    signalNode.kalmanLatitude,
+    signalNode.kalmanLongitude,
+    snapshot.emergency.active,
+    snapshot.emergency.kalmanEnabled,
+    snapshot.emergency.vehicleType,
+    snapshot.vehicles.vehicle1.heading,
+    snapshot.vehicles.vehicle1.kalmanLatitude,
+    snapshot.vehicles.vehicle1.kalmanLongitude,
+    snapshot.vehicles.vehicle1.latitude,
+    snapshot.vehicles.vehicle1.longitude,
+    snapshot.vehicles.vehicle2.heading,
+    snapshot.vehicles.vehicle2.kalmanLatitude,
+    snapshot.vehicles.vehicle2.kalmanLongitude,
+    snapshot.vehicles.vehicle2.latitude,
+    snapshot.vehicles.vehicle2.longitude,
+  ]);
+
+  useEffect(() => {
+    const anyWarning = civilianMetrics.some((metric) => metric.warning);
+    if (anyWarning && !warningRef.current) {
+      warningRef.current = true;
+      triggerSirenBeep();
+      appendLog({
+        level: "warning",
+        source: "v2v",
+        message: `Emergency vehicle entered 25m safety zone for ${civilianMetrics
+          .filter((metric) => metric.warning)
+          .map((metric) => metric.label)
+          .join(", ")}`,
+      });
+      return;
+    }
+
+    if (!anyWarning) {
+      warningRef.current = false;
+    }
+  }, [civilianMetrics]);
+
+  useEffect(() => {
+    if (signalOverrideRef.current === snapshot.signals.mode) return;
+    signalOverrideRef.current = snapshot.signals.mode;
+    appendLog({
+      level: snapshot.signals.mode === "override" ? "critical" : "info",
+      source: "signal",
+      message:
+        snapshot.signals.mode === "override"
+          ? `Signal override engaged for ${evDirection.toUpperCase()} approach (${evToSignalDistance.toFixed(1)}m)`
+          : "Signal override released, reverted to normal cycle",
+    });
+  }, [evDirection, evToSignalDistance, snapshot.signals.mode]);
+
+  const setEmergencyVehicleType = (vehicleType: VehicleType) => {
+    updateEmergency({ vehicleType });
+    updateVehicle("emergency", { vehicleType });
+    appendLog({
+      level: "info",
+      source: "emergency",
+      message: `Emergency type changed to ${vehicleType.toUpperCase()}`,
+    });
+  };
+
+  const toggleBroadcast = () => {
+    const nextActive = !snapshot.emergency.active;
+    updateEmergency({ active: nextActive });
+    updateVehicle("emergency", { broadcastEnabled: nextActive });
+    appendLog({
+      level: nextActive ? "critical" : "info",
+      source: "emergency",
+      message: `Broadcast ${nextActive ? "activated" : "deactivated"}`,
+    });
+  };
+
+  const toggleKalman = () => {
+    const enabled = !snapshot.emergency.kalmanEnabled;
+    updateEmergency({ kalmanEnabled: enabled });
+    appendLog({
+      level: "info",
+      source: "emergency",
+      message: `Kalman filter ${enabled ? "enabled" : "disabled"}`,
+    });
+  };
 
   return (
-    <section className="animate-fade-in-up mt-8 rounded-2xl border border-zinc-800 bg-black/40 p-6" style={{ animationDelay: "180ms" }}>
-      {/* panel header + tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="gps-dot" />
-          <h2 className="text-lg font-semibold text-zinc-100">Live Module Tools</h2>
+    <section className="animate-fade-in-up mt-8 rounded-2xl border border-zinc-800 bg-black/40 p-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm">
+        <div>
+          <p className="font-semibold text-zinc-100">{title}</p>
+          <p className="text-zinc-500">GPS: {gpsStatus}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                activeTab === tab
-                  ? "tab-active"
-                  : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {TAB_LABELS[tab]}
-            </button>
-          ))}
+        <div className="text-right">
+          <p className="text-zinc-400">Realtime</p>
+          <p className={connectionStatus === "connected" ? "acc-good" : "acc-medium"}>
+            {connectionStatus === "connected" ? "Connected" : "Fallback mode"}
+          </p>
         </div>
       </div>
 
-      {/* status bar */}
-      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm">
-        <p className="text-zinc-300">
-          <strong className="text-zinc-100">{title}</strong>
-          <span className="mx-2 text-zinc-700">·</span>
-          <span className="text-zinc-400">Tracker: </span>
-          <span className={trackerStatus.startsWith("GPS tracker") ? "acc-good" : "text-zinc-300"}>
-            {trackerStatus}
-          </span>
-        </p>
-        <p className="mt-1 text-zinc-500">
-          GPS: <span className="text-zinc-400">{gpsStatus}</span>
-        </p>
-      </div>
-
-      {/* ── overview tab ── */}
-      {activeTab === "overview" && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <button
-            type="button"
-            className="btn-primary cursor-pointer"
-            onClick={initializeTrackers}
-          >
-            Initialize GPS Trackers (4 Units)
-          </button>
-          <button
-            type="button"
-            className="btn-secondary cursor-pointer"
-            onClick={useCurrentLocation}
-          >
-            Use My GPS for Emergency Unit
-          </button>
-        </div>
-      )}
-
-      {/* ── gps tab ── */}
-      {activeTab === "gps" && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {units.map((unit, i) => (
-            <article
-              key={unit.id}
-              className="card-glow animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="flex items-center gap-2">
-                <span className={unit.gpsLock ? "gps-dot" : "gps-dot-offline"} />
-                <h3 className="font-semibold text-zinc-100">{unit.label}</h3>
-              </div>
-              <p className="mt-2 font-mono text-xs text-zinc-500">
-                {unit.lat.toFixed(5)}, {unit.lng.toFixed(5)}
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
-                <span className="text-zinc-500">Accuracy</span>
-                <span className={`text-right font-mono font-semibold ${accuracyClass(unit.accuracy)}`}>
-                  {unit.accuracy.toFixed(1)} m
-                </span>
-                <span className="text-zinc-500">Confidence</span>
-                <span className={`text-right font-mono font-semibold ${confidenceClass(unit.confidence)}`}>
-                  {unit.confidence.toFixed(0)} %
-                </span>
-                <span className="text-zinc-500">Speed</span>
-                <span className="text-right font-mono text-zinc-300">
-                  {unit.speed.toFixed(1)} m/s
-                </span>
-                <span className="text-zinc-500">Bearing</span>
-                <span className="text-right font-mono text-zinc-300">
-                  {unit.bearing.toFixed(0)}°
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {/* ── dashboard tab ── */}
-      {activeTab === "dashboard" && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <article className="animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-            <h3 className="font-semibold text-zinc-100">Accuracy Snapshot</h3>
-            <p className="mt-3 text-2xl font-bold font-mono">
-              <span className={accuracyClass(parseFloat(averageAccuracy))}>{averageAccuracy} m</span>
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">average across all units</p>
-            <div className="mt-3 flex items-center gap-2 text-sm">
-              <span className="gps-dot" />
-              <span className="text-zinc-300">
-                {units.filter((u) => u.gpsLock).length}/4 units locked
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-zinc-600">Feed interval: 1 s</p>
-          </article>
-
-          <article className="animate-fade-in-up rounded-xl border border-zinc-800 bg-zinc-950 p-4" style={{ animationDelay: "60ms" }}>
-            <h3 className="font-semibold text-zinc-100">Unit Focus</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {units.map((unit) => (
+      {role === "emergency" && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <h3 className="text-zinc-100 font-semibold">Emergency Vehicle Module</h3>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(["ambulance", "fire", "police"] as VehicleType[]).map((vehicleType) => (
                 <button
-                  key={unit.id}
+                  key={vehicleType}
                   type="button"
-                  className={`rounded-md border px-3 py-1 text-sm transition-all duration-200 ${
-                    selectedUnit === unit.id
-                      ? "tab-active"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                  }`}
-                  onClick={() => setSelectedUnit(unit.id)}
+                  className={`rounded-md border px-3 py-2 text-sm uppercase ${snapshot.emergency.vehicleType === vehicleType ? "tab-active" : "border-zinc-700 text-zinc-300"}`}
+                  onClick={() => setEmergencyVehicleType(vehicleType)}
                 >
-                  {unit.label}
+                  {vehicleType}
                 </button>
               ))}
             </div>
-            {selectedUnitData && (
-              <div className="mt-3 text-xs text-zinc-500 font-mono">
-                <p>{selectedUnitData.lat.toFixed(5)}, {selectedUnitData.lng.toFixed(5)}</p>
-                <p className="mt-1">
-                  <span className={accuracyClass(selectedUnitData.accuracy)}>
-                    ±{selectedUnitData.accuracy.toFixed(1)} m
-                  </span>
-                  {" · "}
-                  <span className={confidenceClass(selectedUnitData.confidence)}>
-                    {selectedUnitData.confidence.toFixed(0)} % conf
-                  </span>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={toggleBroadcast}
+                className={`h-24 w-24 rounded-full border text-xs font-semibold tracking-wide transition ${snapshot.emergency.active ? "border-red-500 bg-red-500/20 text-red-200 shadow-[0_0_25px_rgba(255,34,51,0.45)]" : "border-zinc-700 bg-zinc-900 text-zinc-300"}`}
+              >
+                {snapshot.emergency.active ? "BROADCAST ON" : "BROADCAST OFF"}
+              </button>
+              <button type="button" className="btn-secondary" onClick={toggleKalman}>
+                Kalman {snapshot.emergency.kalmanEnabled ? "ON" : "OFF"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-lg border border-zinc-800 p-2">
+                <p className="text-zinc-500">Raw GPS</p>
+                <p className="font-mono text-zinc-200 text-xs">
+                  {emergencyNode.latitude.toFixed(6)}, {emergencyNode.longitude.toFixed(6)}
                 </p>
               </div>
-            )}
+              <div className="rounded-lg border border-zinc-800 p-2">
+                <p className="text-zinc-500">Kalman GPS</p>
+                <p className="font-mono text-cyan-300 text-xs">
+                  {emergencyNode.kalmanLatitude.toFixed(6)}, {emergencyNode.kalmanLongitude.toFixed(6)}
+                </p>
+              </div>
+              <p className="text-zinc-400">Speed: {emergencyNode.speed.toFixed(1)} m/s</p>
+              <p className="text-zinc-400">Heading: {emergencyNode.heading.toFixed(0)}° ({evDirection})</p>
+              <p className="text-zinc-400">Accuracy: ±{emergencyNode.accuracy.toFixed(1)} m</p>
+              <p className="text-zinc-400">Nearby V2V in 25m: {nearbyCount}</p>
+            </div>
+          </article>
+
+          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <h3 className="font-semibold text-zinc-100">Prediction (5s)</h3>
+            <p className="mt-2 font-mono text-xs text-zinc-300">
+              {predictedPosition.latitude.toFixed(6)}, {predictedPosition.longitude.toFixed(6)}
+            </p>
+            <p className="mt-2 text-zinc-500 text-sm">
+              Direction: {headingToDirection(emergencyNode.heading).toUpperCase()} · Broadcast {snapshot.emergency.active ? "ON" : "OFF"}
+            </p>
+            <div className="mt-4 space-y-2">
+              {civilianMetrics.map((metric) => (
+                <div key={metric.id} className="rounded-lg border border-zinc-800 p-2 text-sm">
+                  <p className="text-zinc-200">{metric.label}</p>
+                  <p className={metric.warning ? "text-red-300" : "text-zinc-400"}>
+                    {metric.warning ? "Warning" : "Normal"} · {metric.distance.toFixed(1)} m
+                  </p>
+                </div>
+              ))}
+            </div>
           </article>
         </div>
       )}
 
-      {/* ── map tab ── */}
-      {activeTab === "map" && (
-        <div className="mt-4 animate-fade-in">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {(["street", "satellite"] as MapLayer[]).map((layer) => (
-              <button
-                key={layer}
-                type="button"
-                className={`rounded-md border px-3 py-1 text-sm capitalize transition-all duration-200 ${
-                  mapLayer === layer
-                    ? "tab-active"
-                    : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                }`}
-                onClick={() => setMapLayer(layer)}
-              >
-                {layer}
-              </button>
+      {role === "signal" && (
+        <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <h3 className="font-semibold text-zinc-100">Traffic Signal Module</h3>
+          <p className="mt-1 text-sm text-zinc-500">
+            Mode: <span className={snapshot.signals.mode === "override" ? "text-red-300" : "acc-good"}>{snapshot.signals.mode.toUpperCase()}</span>
+            {" · "}EV distance: {evToSignalDistance.toFixed(1)} m
+            {" · "}EV direction: {evDirection.toUpperCase()}
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(["north", "south", "east", "west"] as const).map((direction) => (
+              <div key={direction} className="rounded-lg border border-zinc-800 p-3">
+                <p className="text-zinc-400 uppercase text-xs">{direction}</p>
+                <p
+                  className={`mt-1 text-sm font-semibold ${
+                    snapshot.signals[direction] === "green"
+                      ? "text-emerald-300"
+                      : snapshot.signals[direction] === "yellow"
+                        ? "text-yellow-300"
+                        : "text-red-300"
+                  }`}
+                >
+                  {snapshot.signals[direction].toUpperCase()}
+                </p>
+              </div>
             ))}
-            <div className="flex items-center gap-1 text-sm text-zinc-500">
-              <span className="gps-dot" style={{ width: 6, height: 6 }} />
-              {selectedUnitData.label}
-              <span className="font-mono text-xs text-zinc-600 ml-1">
-                {selectedUnitData.lat.toFixed(4)}, {selectedUnitData.lng.toFixed(4)}
-              </span>
-            </div>
           </div>
-          <div className="overflow-hidden rounded-xl border border-zinc-800" style={{ boxShadow: "0 0 32px rgba(0,229,255,0.05)" }}>
-            <iframe
-              key={`${mapLayer}-${selectedUnitData.id}`}
-              src={mapSrc}
-              width="100%"
-              height="380"
-              loading="lazy"
-              className="block"
-              title="Live map"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </div>
+          <p className="mt-4 text-sm text-zinc-500">
+            Override triggered when emergency vehicle is within 50m V2I zone.
+          </p>
+        </article>
       )}
 
-      {/* ── admin review ── */}
-      {isAdminReviewModule && (
-        <section className="animate-fade-in-up mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4" style={{ animationDelay: "120ms" }}>
-          <div className="flex items-center gap-2">
-            <span className="gps-dot" />
-            <h3 className="text-base font-semibold text-zinc-100">Admin Review</h3>
-          </div>
-          <p className="mt-1 text-sm text-zinc-500">
-            Read-only operational review panel for all tracked modules.
-          </p>
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="mt-3 w-full rounded-lg border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-cyan-500/50 focus:shadow-[0_0_10px_rgba(0,229,255,0.1)]"
-            placeholder="Filter by module name"
-            aria-label="Filter module rows"
-          />
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="text-zinc-500">
-                  <th className="border-b border-zinc-800 px-2 py-2">Module</th>
-                  <th className="border-b border-zinc-800 px-2 py-2">State</th>
-                  <th className="border-b border-zinc-800 px-2 py-2">Accuracy</th>
-                  <th className="border-b border-zinc-800 px-2 py-2">Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAdminRows.map((row) => (
-                  <tr
-                    key={row.key}
-                    className="border-b border-zinc-900 transition hover:bg-zinc-900/50"
-                  >
-                    <td className="px-2 py-2 text-zinc-200">{row.module}</td>
-                    <td className="px-2 py-2">
-                      <span className="flex items-center gap-1.5">
-                        <span className={row.state === "Online" ? "gps-dot" : "gps-dot-offline"} style={{ width: 6, height: 6 }} />
-                        <span className={row.state === "Online" ? "acc-good" : "text-zinc-500"}>
-                          {row.state}
-                        </span>
-                      </span>
-                    </td>
-                    <td className={`px-2 py-2 font-mono ${accuracyClass(row.accuracy)}`}>
-                      {row.accuracy.toFixed(1)} m
-                    </td>
-                    <td className={`px-2 py-2 font-mono ${confidenceClass(row.confidence)}`}>
-                      {row.confidence.toFixed(0)} %
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+      {(role === "vehicle1" || role === "vehicle2") && (
+        <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <h3 className="font-semibold text-zinc-100">Civilian Vehicle (V2V)</h3>
+          {civilianMetrics
+            .filter((metric) => metric.id === role)
+            .map((metric) => (
+              <div key={metric.id} className="mt-3 rounded-lg border border-zinc-800 p-4">
+                <p className="text-zinc-300">
+                  EV Type: <strong>{snapshot.emergency.vehicleType.toUpperCase()}</strong>
+                </p>
+                <p className="text-zinc-300">EV Heading: {metric.heading.toFixed(0)}°</p>
+                <p className={metric.warning ? "text-red-300 mt-2" : "text-zinc-400 mt-2"}>
+                  Status: {metric.warning ? "Warning" : "Normal Driving"}
+                </p>
+                <p className="text-zinc-300">Distance: {metric.distance.toFixed(1)} m</p>
+                <p className="mt-2 text-sm text-zinc-500">{metric.suggestion}</p>
+              </div>
+            ))}
+          <p className="mt-3 text-xs text-zinc-500">Audio siren alert auto-triggers once when EV enters 25m zone.</p>
+        </article>
+      )}
+
+      {role === "admin" && (
+        <div className="space-y-4">
+          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold text-zinc-100">Admin Control Center</h3>
+              <div className="flex gap-2 text-sm">
+                <button
+                  type="button"
+                  className={mapMode === "street" ? "tab-active rounded-md px-3 py-1" : "rounded-md border border-zinc-700 px-3 py-1 text-zinc-400"}
+                  onClick={() => setMapMode("street")}
+                >
+                  Street
+                </button>
+                <button
+                  type="button"
+                  className={mapMode === "walking" ? "tab-active rounded-md px-3 py-1" : "rounded-md border border-zinc-700 px-3 py-1 text-zinc-400"}
+                  onClick={() => setMapMode("walking")}
+                >
+                  Walking Street View
+                </button>
+              </div>
+            </div>
+            <p className="mt-2 text-sm text-zinc-500">
+              Live nodes: {Object.keys(snapshot.vehicles).length} · EV zone 25m (red) · V2I zone 50m (yellow)
+            </p>
+            <div className="mt-4">
+              <LiveMap snapshot={snapshot} mode={mapMode} />
+            </div>
+          </article>
+
+          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <h3 className="font-semibold text-zinc-100">Node Status</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {Object.values(snapshot.vehicles).map((node) => (
+                <div key={node.id} className="rounded-lg border border-zinc-800 p-3 text-sm">
+                  <p className="text-zinc-200">{node.label}</p>
+                  <p className="text-zinc-500">{node.kalmanLatitude.toFixed(5)}, {node.kalmanLongitude.toFixed(5)}</p>
+                  <p className="text-zinc-500">Speed {node.speed.toFixed(1)} m/s · Heading {node.heading.toFixed(0)}°</p>
+                  <p className={node.connectionStatus === "connected" ? "acc-good" : "acc-medium"}>
+                    {node.connectionStatus.toUpperCase()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <h3 className="font-semibold text-zinc-100">Live Logs</h3>
+            <div className="mt-3 max-h-64 overflow-auto space-y-2 pr-1">
+              {snapshot.logs.length === 0 ? (
+                <p className="text-zinc-500 text-sm">No events yet.</p>
+              ) : (
+                snapshot.logs.slice(0, 25).map((log) => (
+                  <div key={log.id} className="rounded-md border border-zinc-800 px-3 py-2 text-sm">
+                    <p className="text-zinc-300">[{compactTime(log.timestamp)}] {log.message}</p>
+                    <p className="text-zinc-500 text-xs uppercase">{log.source} · {log.level}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+        </div>
       )}
     </section>
   );
