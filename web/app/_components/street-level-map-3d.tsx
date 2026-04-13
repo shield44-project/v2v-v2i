@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import * as THREE from "three";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
+import { COMMUNICATION_ARC_LIFT, EMERGENCY_MESH_ROTATION_SPEED } from "@/lib/v2x/constants";
 
 type RoutePoint = [number, number];
 
@@ -26,6 +27,12 @@ const SOURCE_ROUTE_ALT = "ev-route-alt";
 const SOURCE_COLLISION = "predicted-collision-zones";
 const SOURCE_NODES = "v2x-node-points";
 const SOURCE_COMMS = "v2x-comms";
+// Converts UI camera-height meters to a small Mercator Z offset for the custom Three.js layer.
+const MERCATOR_HEIGHT_SCALE = 0.000002;
+const NODE_EMOJI: Record<string, string> = {
+  emergency: "🚨",
+  signal: "🚦",
+};
 
 function makeLine(points: RoutePoint[]) {
   return {
@@ -260,12 +267,12 @@ export default function StreetLevelMap3D({
             .makeTranslation(
               modelTransform.translateX,
               modelTransform.translateY,
-              modelTransform.translateZ + 0.000002 * cameraHeight,
+              modelTransform.translateZ + MERCATOR_HEIGHT_SCALE * cameraHeight,
             )
             .scale(new THREE.Vector3(modelTransform.scale, -modelTransform.scale, modelTransform.scale))
             .multiply(rotation);
           camera.projectionMatrix = m.multiply(l);
-          emergencyMesh.rotation.z += 0.01;
+          emergencyMesh.rotation.z += EMERGENCY_MESH_ROTATION_SPEED;
           if (!renderer) return;
           renderer.resetState();
           renderer.render(scene, camera);
@@ -342,7 +349,7 @@ export default function StreetLevelMap3D({
             const start = snapshot.vehicles[link.from];
             const end = snapshot.vehicles[link.to];
             if (!start || !end) return [];
-            const midLat = (start.kalmanLatitude + end.kalmanLatitude) / 2 + 0.00005;
+            const midLat = (start.kalmanLatitude + end.kalmanLatitude) / 2 + COMMUNICATION_ARC_LIFT;
             const midLng = (start.kalmanLongitude + end.kalmanLongitude) / 2;
             return [
               {
@@ -370,7 +377,7 @@ export default function StreetLevelMap3D({
       }
       const markerEl = document.createElement("div");
       markerEl.className = "street-level-node";
-      markerEl.textContent = node.id === "emergency" ? "🚨" : node.id === "signal" ? "🚦" : "🚘";
+      markerEl.textContent = NODE_EMOJI[node.id] ?? "🚘";
       markerEl.style.fontSize = node.id === "emergency" ? "18px" : "14px";
       const marker = new mapboxgl.Marker({ element: markerEl, anchor: "center" })
         .setLngLat([node.kalmanLongitude, node.kalmanLatitude])

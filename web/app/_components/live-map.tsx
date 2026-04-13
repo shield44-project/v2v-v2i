@@ -6,6 +6,7 @@ import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer } from "
 import { useMap } from "react-leaflet/hooks";
 import { predictFuturePosition, vincentyDistanceMeters } from "@/lib/v2x/geodesy";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
+import { COMMUNICATION_ARC_LIFT } from "@/lib/v2x/constants";
 
 export type MapMode = "street" | "walking" | "satellite";
 
@@ -205,7 +206,7 @@ export default function LiveMap({
             const start = snapshot.vehicles[link.from];
             const end = snapshot.vehicles[link.to];
             if (!start || !end) return null;
-            const midLat = (start.kalmanLatitude + end.kalmanLatitude) / 2 + 0.00005;
+            const midLat = (start.kalmanLatitude + end.kalmanLatitude) / 2 + COMMUNICATION_ARC_LIFT;
             const midLon = (start.kalmanLongitude + end.kalmanLongitude) / 2;
             const latencyColor = link.latencyMs > 120 ? "#ef4444" : link.latencyMs > 70 ? "#f59e0b" : "#10b981";
             const pulseFactor = (Date.now() % 1000) / 1000;

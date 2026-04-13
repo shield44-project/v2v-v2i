@@ -24,6 +24,7 @@ import {
 import { generateV2XAiInsights, type AiRiskLevel } from "@/lib/v2x/risk-model";
 import type { NodeRole, RealtimeSnapshot, SignalDirection, VehicleType } from "@/lib/v2x/types";
 import type { MapMode } from "@/app/_components/live-map";
+import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE } from "@/lib/v2x/constants";
 
 const LiveMap = dynamic(() => import("@/app/_components/live-map"), { ssr: false });
 const StreetLevelMap3D = dynamic(() => import("@/app/_components/street-level-map-3d"), { ssr: false });
@@ -52,6 +53,9 @@ const MAX_GPS_ACCURACY_METERS = 35;
 const DEFAULT_GPS_ACCURACY_METERS = 8;
 // Approx. 3.3m latitude movement per button tap (demo-scale repositioning).
 const VEHICLE_NUDGE_STEP = 0.00003;
+// Converts small longitude deltas to stereo pan range [-1, 1] for alert cues.
+const STEREO_PAN_LONGITUDE_SCALE_CLOSE = 3500;
+const STEREO_PAN_LONGITUDE_SCALE_SIGNAL = 3200;
 const ROUTE_WAYPOINTS: [number, number][] = [
   [12.91825, 77.62064],
   [12.91818, 77.62051],
@@ -92,7 +96,7 @@ function signalTemplate(direction: SignalDirection) {
 
 function interpolateRoutePoint(route: [number, number][], progress: number): { latitude: number; longitude: number; heading: number } {
   if (route.length < 2) {
-    const [lat, lon] = route[0] ?? [12.918, 77.6205];
+    const [lat, lon] = route[0] ?? [DEFAULT_LATITUDE, DEFAULT_LONGITUDE];
     return { latitude: lat, longitude: lon, heading: 0 };
   }
   const clamped = ((progress % 1) + 1) % 1;
@@ -142,11 +146,11 @@ function triggerSirenBeep(intensity: number = 0.5, pan = 0, masterVolume = 0.65)
     } else {
       oscillator.connect(gain).connect(context.destination);
     }
+    oscillator.onended = () => {
+      void context.close();
+    };
     oscillator.start();
     oscillator.stop(context.currentTime + 0.32);
-    window.setTimeout(() => {
-      void context.close();
-    }, 380);
   } catch {
     // AudioContext may be unavailable in some environments
   }
@@ -171,13 +175,12 @@ function triggerPing(pan = 0, masterVolume = 0.5): void {
     } else {
       oscillator.connect(gain).connect(context.destination);
     }
+    oscillator.onended = () => {
+      void context.close();
+    };
     oscillator.start();
     oscillator.stop(context.currentTime + 0.2);
-  } finally {
-    window.setTimeout(() => {
-      void context.close();
-    }, 260);
-  }
+  } catch {}
 }
 
 function triggerVibration(): void {
@@ -639,7 +642,9 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       const intensity = Math.min(1, Math.max(0.15, 1 - closest / 50));
       const closestNodeId = civilianMetrics.find((m) => m.distance === closest)?.id;
       const closestNode = closestNodeId ? snapshot.vehicles[closestNodeId] : null;
-      const pan = closestNode ? Math.max(-1, Math.min(1, (closestNode.kalmanLongitude - emergencyNode.kalmanLongitude) * 3500)) : 0;
+      const pan = closestNode
+        ? Math.max(-1, Math.min(1, (closestNode.kalmanLongitude - emergencyNode.kalmanLongitude) * STEREO_PAN_LONGITUDE_SCALE_CLOSE))
+        : 0;
       if (!audioMuted) {
         triggerSirenBeep(intensity, pan, audioVolume / 100);
       }
@@ -690,7 +695,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   useEffect(() => {
     if (!showCommunication || audioMuted) return;
     const timer = window.setInterval(() => {
-      const signalPan = Math.max(-1, Math.min(1, (signalNode.kalmanLongitude - emergencyNode.kalmanLongitude) * 3200));
+      const signalPan = Math.max(
+        -1,
+        Math.min(1, (signalNode.kalmanLongitude - emergencyNode.kalmanLongitude) * STEREO_PAN_LONGITUDE_SCALE_SIGNAL),
+      );
       triggerPing(signalPan, Math.min(0.6, audioVolume / 100));
     }, 3500);
     return () => window.clearInterval(timer);

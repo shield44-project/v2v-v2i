@@ -235,6 +235,13 @@ export type CollisionForecast = {
   severity: "warning" | "critical";
 };
 
+function compareCollisionForecastUrgency(a: CollisionForecast, b: CollisionForecast): number {
+  if (a.secondsAhead !== b.secondsAhead) {
+    return a.secondsAhead - b.secondsAhead;
+  }
+  return a.distanceMeters - b.distanceMeters;
+}
+
 export function predictEmergencyCollisions(
   emergency: {
     kalmanLatitude: number;
@@ -309,5 +316,6 @@ export function predictEmergencyCollisions(
     });
   });
 
-  return forecasts.sort((a, b) => a.secondsAhead - b.secondsAhead || a.distanceMeters - b.distanceMeters);
+  // Most urgent forecasts first: soonest time-to-intersection, then closest separation.
+  return forecasts.sort(compareCollisionForecastUrgency);
 }
