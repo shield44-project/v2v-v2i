@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   appendLog,
@@ -47,6 +48,7 @@ const EV_DRIFT_AMPLITUDE = 0.00001;
 const MIN_GPS_ACCURACY_METERS = 2.5;
 const MAX_GPS_ACCURACY_METERS = 35;
 const DEFAULT_GPS_ACCURACY_METERS = 8;
+const VEHICLE_NUDGE_STEP = 0.00003;
 
 function drift(seed: number, scale: number): number {
   return Math.sin(seed) * scale;
@@ -95,6 +97,12 @@ function compactTime(iso: string): string {
 
 function formatRiskLabel(score: number, level: AiRiskLevel): string {
   return `${score.toFixed(0)}/100 · ${level.toUpperCase()}`;
+}
+
+function formatEta(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds)) return "n/a";
+  if (seconds <= 0) return "<1s";
+  return `${Math.round(seconds)}s`;
 }
 
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
@@ -188,6 +196,12 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   );
 
   const evDirection = headingToDirection(emergencyNode.heading);
+  const evEtaToSignalSeconds = emergencyNode.speed > 0.1 ? evToSignalDistance / emergencyNode.speed : null;
+  const highestAlertLevel = civilianMetrics.some((metric) => metric.alert25)
+    ? "critical"
+    : civilianMetrics.some((metric) => metric.alert50)
+      ? "warning"
+      : "normal";
   const aiInsights = useMemo(
     () =>
       generateV2XAiInsights(
@@ -213,6 +227,31 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         5,
       ),
     [emergencyNode.heading, emergencyNode.kalmanLatitude, emergencyNode.kalmanLongitude, emergencyNode.speed],
+  );
+
+  const radarTargets = useMemo(
+    () =>
+      civilianMetrics.map((metric) => {
+        const node = snapshot.vehicles[metric.id];
+        const bearing = bearingBetweenCoordinates(
+          emergencyNode.kalmanLatitude,
+          emergencyNode.kalmanLongitude,
+          node.kalmanLatitude,
+          node.kalmanLongitude,
+        );
+        const clampedDistance = Math.max(0, Math.min(metric.distance, 90));
+        const radius = (clampedDistance / 90) * 44;
+        const radians = ((bearing - 90) * Math.PI) / 180;
+        return {
+          id: metric.id,
+          label: metric.label,
+          x: 50 + Math.cos(radians) * radius,
+          y: 50 + Math.sin(radians) * radius,
+          alertClass: metric.alert25 ? "text-red-400" : metric.alert50 ? "text-yellow-300" : "text-emerald-300",
+          distance: metric.distance,
+        };
+      }),
+    [civilianMetrics, emergencyNode.kalmanLatitude, emergencyNode.kalmanLongitude, snapshot.vehicles],
   );
 
   // — sync refs ———————————————————————————————————————————
@@ -479,9 +518,32 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     appendLog({ level: "info", source: "emergency", message: `Kalman filter ${enabled ? "enabled" : "disabled"}` });
   };
 
+  const nudgeVehicle = (nodeId: "vehicle1" | "vehicle2", latitudeDelta: number, longitudeDelta: number) => {
+    const node = snapshot.vehicles[nodeId];
+    updateVehicle(nodeId, {
+      latitude: node.latitude + latitudeDelta,
+      longitude: node.longitude + longitudeDelta,
+      kalmanLatitude: node.kalmanLatitude + latitudeDelta,
+      kalmanLongitude: node.kalmanLongitude + longitudeDelta,
+    });
+    appendLog({
+      level: "info",
+      source: nodeId,
+      message: `${node.label} position tuned (${latitudeDelta.toFixed(5)}, ${longitudeDelta.toFixed(5)})`,
+    });
+  };
+
+  const setVehicleTelemetry = (nodeId: "vehicle1" | "vehicle2", key: "speed" | "heading", value: number) => {
+    if (key === "speed") {
+      updateVehicle(nodeId, { speed: value });
+      return;
+    }
+    updateVehicle(nodeId, { heading: value });
+  };
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="animate-fade-in-up mt-8 rounded-2xl border border-zinc-800 bg-black/40 p-6">
+    <section className="animate-fade-in-up glass-panel mt-8 rounded-2xl p-6">
       {/* Status bar */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm">
         <div>
@@ -516,6 +578,82 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             </button>
           )}
         </div>
+      </div>
+
+      <div className="mb-5 grid gap-4 xl:grid-cols-4">
+        <article className="glass-panel layered-card float-soft rounded-xl p-4 xl:col-span-1">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-400">3D Vehicle View</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-zinc-800/80 bg-black/35 p-2">
+              <Image src="/vehicles/emergency-car.svg" alt="Emergency vehicle" width={120} height={60} className="w-full" />
+              <p className="mt-1 text-center text-[11px] text-red-300">Emergency</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800/80 bg-black/35 p-2">
+              <Image src="/vehicles/civilian-car.svg" alt="Civilian vehicle" width={120} height={60} className="w-full" />
+              <p className="mt-1 text-center text-[11px] text-cyan-300">Civilian</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className={`cyber-chip ${highestAlertLevel === "critical" ? "border-red-500/50 text-red-300" : highestAlertLevel === "warning" ? "border-yellow-500/50 text-yellow-300" : "border-emerald-500/50 text-emerald-300"}`}>
+              Alert {highestAlertLevel}
+            </span>
+            <span className="cyber-chip text-cyan-300">ETA {formatEta(evEtaToSignalSeconds)}</span>
+          </div>
+        </article>
+
+        <article className="glass-panel layered-card rounded-xl p-4 xl:col-span-1">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-400">Radar Detection</p>
+          <div className="mt-3 radar-widget">
+            {radarTargets.map((target) => (
+              <span
+                key={target.id}
+                className={`radar-dot ${target.alertClass}`}
+                style={{ left: `${target.x}%`, top: `${target.y}%` }}
+                title={`${target.label} · ${target.distance.toFixed(1)}m`}
+              />
+            ))}
+          </div>
+        </article>
+
+        <article className="glass-panel layered-card rounded-xl p-4 xl:col-span-1">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-400">Direction + ETA</p>
+          <div className="mt-3 flex items-center justify-center">
+            <div className="compass-ring">
+              <div className="compass-needle" style={{ transform: `translateX(-50%) rotate(${emergencyNode.heading}deg)` }} />
+              <span className="absolute left-1/2 top-2 -translate-x-1/2 text-[11px] text-zinc-400">N</span>
+              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] text-zinc-400">S</span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400">W</span>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400">E</span>
+            </div>
+          </div>
+          <p className="mt-3 text-center text-sm text-zinc-200">Heading {emergencyNode.heading.toFixed(0)}° · {evDirection.toUpperCase()}</p>
+          <p className="text-center text-xs text-zinc-400">Signal ETA: {formatEta(evEtaToSignalSeconds)}</p>
+          <p className="text-center text-xs text-zinc-500">Predicted: {predictedPosition.latitude.toFixed(5)}, {predictedPosition.longitude.toFixed(5)}</p>
+        </article>
+
+        <article className="glass-panel layered-card rounded-xl p-4 xl:col-span-1">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-400">System Notifications</p>
+          <div className="mt-3 max-h-[220px] space-y-2 overflow-auto pr-1">
+            {snapshot.logs.length === 0 ? (
+              <p className="text-xs text-zinc-500">No events yet.</p>
+            ) : (
+              snapshot.logs.slice(0, 8).map((log) => (
+                <div
+                  key={`compact-${log.id}`}
+                  className={`rounded-lg border px-2.5 py-2 text-xs transition ${
+                    log.level === "critical"
+                      ? "border-red-500/35 bg-red-500/10"
+                      : log.level === "warning"
+                        ? "border-yellow-500/35 bg-yellow-500/10"
+                        : "border-zinc-800 bg-zinc-900/40"
+                  }`}
+                >
+                  <p className="text-zinc-200">[{compactTime(log.timestamp)}] {log.message}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
       </div>
 
       {/* ── EMERGENCY VEHICLE ──────────────────────────────────────────────── */}
@@ -837,6 +975,57 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               Dashed line = predicted path
             </p>
             <LiveMap snapshot={snapshot} mode={mapMode} showPredictedPath />
+          </article>
+
+          <article className="glass-panel layered-card rounded-xl p-4">
+            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning (Vehicle1 / Vehicle2)</h3>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {(["vehicle1", "vehicle2"] as const).map((nodeId) => {
+                const node = snapshot.vehicles[nodeId];
+                return (
+                  <div key={`tune-${node.id}`} className="rounded-lg border border-zinc-800/80 bg-black/35 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-zinc-100">{node.label}</p>
+                      <span className="text-xs text-zinc-500">
+                        {node.kalmanLatitude.toFixed(5)}, {node.kalmanLongitude.toFixed(5)}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, VEHICLE_NUDGE_STEP, 0)}>N +</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, -VEHICLE_NUDGE_STEP, 0)}>S -</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, VEHICLE_NUDGE_STEP)}>E +</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, -VEHICLE_NUDGE_STEP)}>W -</button>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <label className="block text-xs text-zinc-400">
+                        Speed: {node.speed.toFixed(1)} m/s
+                        <input
+                          type="range"
+                          min={0}
+                          max={30}
+                          step={0.2}
+                          value={node.speed}
+                          onChange={(event) => setVehicleTelemetry(nodeId, "speed", Number(event.target.value))}
+                          className="mt-1 w-full accent-cyan-300"
+                        />
+                      </label>
+                      <label className="block text-xs text-zinc-400">
+                        Heading: {node.heading.toFixed(0)}°
+                        <input
+                          type="range"
+                          min={0}
+                          max={359}
+                          step={1}
+                          value={node.heading}
+                          onChange={(event) => setVehicleTelemetry(nodeId, "heading", Number(event.target.value))}
+                          className="mt-1 w-full accent-fuchsia-300"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </article>
 
           <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">

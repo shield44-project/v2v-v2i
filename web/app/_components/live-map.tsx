@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer } from "react-leaflet";
 import { useMap } from "react-leaflet/hooks";
-import { predictFuturePosition } from "@/lib/v2x/geodesy";
+import { predictFuturePosition, vincentyDistanceMeters } from "@/lib/v2x/geodesy";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
 
 export type MapMode = "street" | "walking" | "satellite";
@@ -47,6 +48,13 @@ const NODE_LABELS: Record<string, string> = {
   vehicle2: "🚙",
 };
 
+const NODE_IMAGES: Record<string, string> = {
+  emergency: "/vehicles/emergency-car.svg",
+  signal: "/vehicles/signal-node.svg",
+  vehicle1: "/vehicles/civilian-car.svg",
+  vehicle2: "/vehicles/civilian-car.svg",
+};
+
 function FollowCenter({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -61,8 +69,10 @@ export default function LiveMap({
   focusNodeId,
   showPredictedPath = false,
 }: LiveMapProps) {
+  const [trails, setTrails] = useState<Record<string, [number, number][]>>({});
   const emergency = snapshot.vehicles.emergency;
   const focusNode = focusNodeId ? snapshot.vehicles[focusNodeId] : null;
+  const signal = snapshot.vehicles.signal;
 
   const center: [number, number] = focusNode
     ? [
@@ -93,6 +103,24 @@ export default function LiveMap({
     }
     return points;
   }, [emergency, showPredictedPath]);
+
+  useEffect(() => {
+    setTrails((previous) => {
+      const next: Record<string, [number, number][]> = { ...previous };
+      Object.values(snapshot.vehicles).forEach((node) => {
+        const point: [number, number] = [
+          node.kalmanLatitude || node.latitude,
+          node.kalmanLongitude || node.longitude,
+        ];
+        const existing = next[node.id] ?? [];
+        const last = existing[existing.length - 1];
+        if (!last || Math.abs(last[0] - point[0]) + Math.abs(last[1] - point[1]) > 0.000002) {
+          next[node.id] = [...existing, point].slice(-12);
+        }
+      });
+      return next;
+    });
+  }, [snapshot.vehicles]);
 
   return (
     <div className="map-container-animated h-[420px] overflow-hidden rounded-xl border border-zinc-800">
@@ -154,6 +182,25 @@ export default function LiveMap({
           </>
         )}
 
+        {/* node trails */}
+        {Object.values(snapshot.vehicles).map((node) => {
+          const nodeTrail = trails[node.id] ?? [];
+          if (nodeTrail.length < 2) return null;
+          return (
+            <Polyline
+              key={`${node.id}-trail`}
+              positions={nodeTrail}
+              pathOptions={{
+                color: NODE_COLORS[node.id] ?? "#22d3ee",
+                weight: node.id === "emergency" ? 3 : 2,
+                opacity: 0.45,
+                dashArray: node.id === "emergency" ? "10, 8" : "6, 8",
+                className: "map-trail-line",
+              }}
+            />
+          );
+        })}
+
         {/* Vehicle nodes */}
         {Object.values(snapshot.vehicles).map((node) => {
           const lat = node.kalmanLatitude || node.latitude;
@@ -163,30 +210,59 @@ export default function LiveMap({
           const baseRadius = node.id === "emergency" ? 10 : 8;
 
           return (
-            <CircleMarker
-              key={node.id}
-              center={[lat, lon]}
-              radius={isFocused ? baseRadius + 3 : baseRadius}
-              pathOptions={{
-                color,
-                fillColor: color,
-                fillOpacity: isFocused ? 1 : 0.85,
-                weight: isFocused ? 3 : 1.5,
-              }}
-            >
-              <Popup>
-                <strong>
-                  {NODE_LABELS[node.id] ?? "📍"} {node.label}
-                </strong>
-                <div className="text-xs mt-1">
-                  {lat.toFixed(6)}, {lon.toFixed(6)}
-                </div>
-                <div className="text-xs">
-                  Speed: {node.speed.toFixed(1)} m/s · Hdg: {node.heading.toFixed(0)}°
-                </div>
-                <div className="text-xs capitalize">Status: {node.connectionStatus}</div>
-              </Popup>
-            </CircleMarker>
+            <Fragment key={`${node.id}-cluster`}>
+              <CircleMarker
+                key={`${node.id}-pulse`}
+                center={[lat, lon]}
+                radius={isFocused ? baseRadius + 8 : baseRadius + 6}
+                pathOptions={{
+                  color,
+                  fillColor: color,
+                  fillOpacity: 0.08,
+                  weight: 1.2,
+                  className: "map-node-pulse",
+                }}
+              />
+              <CircleMarker
+                key={node.id}
+                center={[lat, lon]}
+                radius={isFocused ? baseRadius + 3 : baseRadius}
+                pathOptions={{
+                  color,
+                  fillColor: color,
+                  fillOpacity: isFocused ? 1 : 0.9,
+                  weight: isFocused ? 3 : 1.5,
+                  className: node.id === "emergency" ? "map-node-core-critical" : "map-node-core",
+                }}
+              >
+                <Popup>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={NODE_IMAGES[node.id] ?? "/vehicles/civilian-car.svg"}
+                      alt={node.label}
+                      width={40}
+                      height={24}
+                      className="h-8 w-10"
+                    />
+                    <strong>
+                      {NODE_LABELS[node.id] ?? "📍"} {node.label}
+                    </strong>
+                  </div>
+                  <div className="text-xs mt-1">
+                    {lat.toFixed(6)}, {lon.toFixed(6)}
+                  </div>
+                  <div className="text-xs">
+                    Speed: {node.speed.toFixed(1)} m/s · Hdg: {node.heading.toFixed(0)}°
+                  </div>
+                  {node.id === "emergency" && (
+                    <div className="text-xs">
+                      ETA signal: {node.speed > 0.1 ? `${(vincentyDistanceMeters(lat, lon, signal.kalmanLatitude, signal.kalmanLongitude) / node.speed).toFixed(1)}s` : "n/a"}
+                    </div>
+                  )}
+                  <div className="text-xs capitalize">Status: {node.connectionStatus}</div>
+                </Popup>
+              </CircleMarker>
+            </Fragment>
           );
         })}
       </MapContainer>
