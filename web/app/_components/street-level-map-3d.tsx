@@ -29,6 +29,14 @@ const SOURCE_NODES = "v2x-node-points";
 const SOURCE_COMMS = "v2x-comms";
 // Converts UI camera-height meters to a small Mercator Z offset for the custom Three.js layer.
 const MERCATOR_HEIGHT_SCALE = 0.000002;
+const EMPTY_LINE_FEATURE: GeoJSON.Feature = {
+  type: "Feature",
+  geometry: {
+    type: "LineString",
+    coordinates: [],
+  },
+  properties: {},
+};
 const NODE_EMOJI: Record<string, string> = {
   emergency: "🚨",
   signal: "🚦",
@@ -65,15 +73,18 @@ export default function StreetLevelMap3D({
   const emergency = snapshot.vehicles.emergency;
   const emergencyRef = useRef(emergency);
   const cameraHeightRef = useRef(cameraHeight);
-  const initialViewRef = useRef({
-    longitude: emergency.kalmanLongitude,
-    latitude: emergency.kalmanLatitude,
-    bearing: emergency.heading,
-  });
+  const initialViewRef = useRef<{ longitude: number; latitude: number; bearing: number } | null>(null);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim() ?? "";
   const hasToken = Boolean(token);
   emergencyRef.current = emergency;
   cameraHeightRef.current = cameraHeight;
+  if (!mapRef.current) {
+    initialViewRef.current = {
+      longitude: emergency.kalmanLongitude,
+      latitude: emergency.kalmanLatitude,
+      bearing: emergency.heading,
+    };
+  }
 
   const nodeFeatures = useMemo(
     () =>
@@ -93,15 +104,21 @@ export default function StreetLevelMap3D({
 
   useEffect(() => {
     if (!containerRef.current || !hasToken || mapRef.current) return;
+    const initialView = initialViewRef.current ?? {
+      longitude: emergencyRef.current.kalmanLongitude,
+      latitude: emergencyRef.current.kalmanLatitude,
+      bearing: emergencyRef.current.heading,
+    };
+    initialViewRef.current = initialView;
 
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: [initialViewRef.current.longitude, initialViewRef.current.latitude],
+      center: [initialView.longitude, initialView.latitude],
       zoom: 16.5,
       pitch: 58,
-      bearing: initialViewRef.current.bearing,
+      bearing: initialView.bearing,
       antialias: true,
     });
     mapRef.current = map;
@@ -109,7 +126,7 @@ export default function StreetLevelMap3D({
 
     map.on("style.load", () => {
       if (!map.getSource(SOURCE_ROUTE_MAIN)) {
-        map.addSource(SOURCE_ROUTE_MAIN, { type: "geojson", data: makeLine([]) as GeoJSON.Feature });
+        map.addSource(SOURCE_ROUTE_MAIN, { type: "geojson", data: EMPTY_LINE_FEATURE });
       }
       if (!map.getLayer("ev-route-main-line")) {
         map.addLayer({
