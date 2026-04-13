@@ -529,7 +529,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     appendLog({
       level: "info",
       source: nodeId,
-      message: `${node.label} position tuned (${latitudeDelta.toFixed(5)}, ${longitudeDelta.toFixed(5)})`,
+      message: `${node.label} position tuned (lat: ${latitudeDelta.toFixed(5)}, lon: ${longitudeDelta.toFixed(5)})`,
     });
   };
 
@@ -978,7 +978,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="glass-panel layered-card rounded-xl p-4">
-            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning (Vehicle1 / Vehicle2)</h3>
+            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning (Vehicle 1 / Vehicle 2)</h3>
             <div className="grid gap-3 lg:grid-cols-2">
               {(["vehicle1", "vehicle2"] as const).map((nodeId) => {
                 const node = snapshot.vehicles[nodeId];

@@ -54,6 +54,7 @@ const NODE_IMAGES: Record<string, string> = {
   vehicle1: "/vehicles/civilian-car.svg",
   vehicle2: "/vehicles/civilian-car.svg",
 };
+const MIN_TRAIL_MOVEMENT_THRESHOLD = 0.000002;
 
 function FollowCenter({ center }: { center: [number, number] }) {
   const map = useMap();
@@ -114,7 +115,10 @@ export default function LiveMap({
         ];
         const existing = next[node.id] ?? [];
         const last = existing[existing.length - 1];
-        if (!last || Math.abs(last[0] - point[0]) + Math.abs(last[1] - point[1]) > 0.000002) {
+        if (
+          !last ||
+          Math.abs(last[0] - point[0]) + Math.abs(last[1] - point[1]) > MIN_TRAIL_MOVEMENT_THRESHOLD
+        ) {
           next[node.id] = [...existing, point].slice(-12);
         }
       });
