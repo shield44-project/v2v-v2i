@@ -19,6 +19,7 @@ type StreetLevelMap3DProps = {
   driverPov: boolean;
   cameraHeight: number;
   cameraFov: number;
+  resetViewToken?: number;
 };
 
 const MAP_STYLE = "mapbox://styles/mapbox/satellite-v9";
@@ -41,6 +42,12 @@ const NODE_EMOJI: Record<string, string> = {
   emergency: "🚨",
   signal: "🚦",
 };
+const NODE_ICON_PATHS: Record<string, string> = {
+  emergency: "/vehicles/emergency-car.svg",
+  signal: "/icons/traffic-light.svg",
+  vehicle1: "/vehicles/civilian-car.svg",
+  vehicle2: "/vehicles/civilian-car.svg",
+};
 
 function makeLine(points: RoutePoint[]) {
   return {
@@ -51,6 +58,14 @@ function makeLine(points: RoutePoint[]) {
     },
     properties: {},
   };
+}
+
+function buildStreetNodeMarkerHtml(nodeId: string, iconSize: number): string {
+  return `
+    <div style="height:${iconSize + 10}px;width:${iconSize + 10}px;border-radius:999px;border:2px solid rgba(148,163,184,0.85);background:rgba(2,6,23,0.86);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(2,6,23,0.4);">
+      <img src="${NODE_ICON_PATHS[nodeId] ?? "/vehicles/civilian-car.svg"}" alt="${NODE_EMOJI[nodeId] ?? "node"}" style="height:${iconSize}px;width:${iconSize}px;object-fit:contain;" />
+    </div>
+  `;
 }
 
 export default function StreetLevelMap3D({
@@ -64,6 +79,7 @@ export default function StreetLevelMap3D({
   driverPov,
   cameraHeight,
   cameraFov,
+  resetViewToken = 0,
 }: StreetLevelMap3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -422,8 +438,8 @@ export default function StreetLevelMap3D({
       }
       const markerEl = document.createElement("div");
       markerEl.className = "street-level-node";
-      markerEl.textContent = NODE_EMOJI[node.id] ?? "🚘";
-      markerEl.style.fontSize = node.id === "emergency" ? "18px" : "14px";
+      const iconSize = node.id === "emergency" ? 26 : 22;
+      markerEl.innerHTML = buildStreetNodeMarkerHtml(node.id, iconSize);
       const marker = new mapboxgl.Marker({ element: markerEl, anchor: "center" })
         .setLngLat([node.kalmanLongitude, node.kalmanLatitude])
         .addTo(map);
@@ -457,6 +473,20 @@ export default function StreetLevelMap3D({
     showCommunication,
     snapshot.vehicles,
   ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({
+      center: [emergency.kalmanLongitude, emergency.kalmanLatitude],
+      zoom: 16.5,
+      pitch: 58,
+      bearing: emergency.heading,
+      speed: 0.55,
+      curve: 1.3,
+      essential: true,
+    });
+  }, [emergency.heading, emergency.kalmanLatitude, emergency.kalmanLongitude, resetViewToken]);
 
   if (!hasToken) {
     return (

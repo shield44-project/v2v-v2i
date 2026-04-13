@@ -2,7 +2,8 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer } from "react-leaflet";
+import { divIcon } from "leaflet";
+import { Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 import { useMap } from "react-leaflet/hooks";
 import { predictFuturePosition, vincentyDistanceMeters } from "@/lib/v2x/geodesy";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
@@ -23,6 +24,7 @@ type LiveMapProps = {
   collisionZones?: Array<{ latitude: number; longitude: number; severity: "warning" | "critical" }>;
   communicationLinks?: Array<{ from: string; to: string; latencyMs: number }>;
   showCommunication?: boolean;
+  resetViewToken?: number;
 };
 
 const TILE_LAYERS: Record<MapMode, { url: string; attribution: string }> = {
@@ -57,19 +59,39 @@ const NODE_LABELS: Record<string, string> = {
 
 const NODE_IMAGES: Record<string, string> = {
   emergency: "/vehicles/emergency-car.svg",
-  signal: "/vehicles/signal-node.svg",
+  signal: "/icons/traffic-light.svg",
   vehicle1: "/vehicles/civilian-car.svg",
   vehicle2: "/vehicles/civilian-car.svg",
 };
 // Minimum combined coordinate-delta (in degrees), ~0.2-0.3m movement at this latitude, before appending a trail point.
 const MIN_TRAIL_DELTA_THRESHOLD = 0.000002;
 
-function FollowCenter({ center }: { center: [number, number] }) {
+function FollowCenter({ center, resetToken }: { center: [number, number]; resetToken: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center);
+    map.setView(center, map.getZoom());
   }, [center, map]);
+  useEffect(() => {
+    map.setView(center, 18, { animate: true });
+  }, [center, map, resetToken]);
   return null;
+}
+
+function buildNodeIcon(nodeId: string, isFocused: boolean) {
+  const imageSrc = NODE_IMAGES[nodeId] ?? "/vehicles/civilian-car.svg";
+  const iconSize = isFocused ? 34 : 30;
+  const iconHtml = `
+    <div style="height:${iconSize}px;width:${iconSize}px;border-radius:999px;border:2px solid rgba(148,163,184,0.9);background:rgba(2,6,23,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(15,23,42,0.7),0 10px 20px rgba(2,6,23,0.45);">
+      <img src="${imageSrc}" alt="${nodeId}" style="height:${Math.round(iconSize * 0.74)}px;width:${Math.round(iconSize * 0.74)}px;object-fit:contain;" />
+    </div>
+  `;
+  return divIcon({
+    className: "v2x-node-icon",
+    html: iconHtml,
+    iconSize: [iconSize, iconSize],
+    iconAnchor: [iconSize / 2, iconSize / 2],
+    popupAnchor: [0, -iconSize / 2],
+  });
 }
 
 export default function LiveMap({
@@ -83,6 +105,7 @@ export default function LiveMap({
   collisionZones = [],
   communicationLinks = [],
   showCommunication = false,
+  resetViewToken = 0,
 }: LiveMapProps) {
   const [trails, setTrails] = useState<Record<string, [number, number][]>>({});
   const emergency = snapshot.vehicles.emergency;
@@ -143,7 +166,7 @@ export default function LiveMap({
   return (
     <div className="map-container-animated h-[420px] overflow-hidden rounded-xl border border-zinc-800">
       <MapContainer center={center} zoom={18} scrollWheelZoom className="h-full w-full">
-        <FollowCenter center={center} />
+        <FollowCenter center={center} resetToken={resetViewToken} />
         <TileLayer attribution={tileLayer.attribution} url={tileLayer.url} />
 
         {/* Predicted EV path */}
@@ -323,18 +346,7 @@ export default function LiveMap({
                   className: "map-node-pulse",
                 }}
               />
-              <CircleMarker
-                key={node.id}
-                center={[lat, lon]}
-                radius={isFocused ? baseRadius + 3 : baseRadius}
-                pathOptions={{
-                  color,
-                  fillColor: color,
-                  fillOpacity: isFocused ? 1 : 0.9,
-                  weight: isFocused ? 3 : 1.5,
-                  className: node.id === "emergency" ? "map-node-core-critical" : "map-node-core",
-                }}
-              >
+              <Marker key={node.id} position={[lat, lon]} icon={buildNodeIcon(node.id, isFocused)}>
                 <Popup>
                   <div className="flex items-center gap-2">
                     <Image
@@ -361,7 +373,7 @@ export default function LiveMap({
                   )}
                   <div className="text-xs capitalize">Status: {node.connectionStatus}</div>
                 </Popup>
-              </CircleMarker>
+              </Marker>
             </Fragment>
           );
         })}

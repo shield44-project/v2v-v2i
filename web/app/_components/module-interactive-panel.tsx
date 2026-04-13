@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   appendLog,
   readSnapshot,
@@ -21,7 +21,12 @@ import {
   predictFuturePosition,
   vincentyDistanceMeters,
 } from "@/lib/v2x/geodesy";
-import { generateV2XAiInsights, type AiRiskLevel } from "@/lib/v2x/risk-model";
+import {
+  generateV2XAiInsights,
+  TRAINED_V2X_MODELS,
+  type AiRiskLevel,
+  type V2XModelId,
+} from "@/lib/v2x/risk-model";
 import type { NodeRole, RealtimeSnapshot, SignalDirection, VehicleType } from "@/lib/v2x/types";
 import type { MapMode } from "@/app/_components/live-map";
 import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE } from "@/lib/v2x/constants";
@@ -82,6 +87,18 @@ const ALT_ROUTE_SOUTH: [number, number][] = [
 ];
 
 type DemoScenario = "urban-peak" | "intersection-block" | "low-latency";
+type ChatbotMessage = {
+  id: string;
+  role: "assistant" | "user";
+  text: string;
+};
+const MAX_CHAT_HISTORY = 10;
+const VEHICLE_ICON_BY_NODE_ID: Record<string, string> = {
+  emergency: "🚑",
+  signal: "🚦",
+  vehicle1: "🚗",
+  vehicle2: "🚙",
+};
 
 function drift(seed: number, scale: number): number {
   return Math.sin(seed) * scale;
@@ -209,12 +226,55 @@ function alertLevelChipClass(level: "critical" | "warning" | "normal"): string {
   return "border-emerald-500/50 text-emerald-300";
 }
 
+function signalLensClass(active: boolean, color: "red" | "yellow" | "green"): string {
+  if (!active) return "bg-zinc-800/80 border-zinc-700";
+  if (color === "green") return "bg-emerald-400 border-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.65)]";
+  if (color === "yellow") return "bg-amber-300 border-amber-100 shadow-[0_0_18px_rgba(251,191,36,0.6)]";
+  return "bg-red-400 border-red-200 shadow-[0_0_18px_rgba(248,113,113,0.6)]";
+}
+
+function buildChatbotReply(
+  prompt: string,
+  aiSummary: string,
+  recommendation: string,
+  nearestDistanceMeters: number | null,
+  etaSeconds: number | null,
+  collisionCount: number,
+  modelName: string,
+): string {
+  const text = prompt.toLowerCase();
+  const nearest = nearestDistanceMeters === null ? "No nearby civilian targets in range." : `Closest vehicle is ${nearestDistanceMeters.toFixed(1)}m from EV.`;
+  const eta = etaSeconds === null ? "Signal ETA unavailable due to low EV speed." : `EV reaches signal in ~${Math.max(1, Math.round(etaSeconds))}s.`;
+
+  if (text.includes("model")) {
+    return `Active model: ${modelName}. ${aiSummary}`;
+  }
+  if (text.includes("eta") || text.includes("when")) {
+    return `${eta} ${nearest}`;
+  }
+  if (text.includes("collision") || text.includes("risk")) {
+    return collisionCount > 0
+      ? `${collisionCount} collision forecast(s) detected. ${recommendation}`
+      : `No predicted collision windows right now. ${recommendation}`;
+  }
+  if (text.includes("vehicle") || text.includes("approach") || text.includes("distance")) {
+    return `${nearest} ${recommendation}`;
+  }
+  if (text.includes("signal") || text.includes("override")) {
+    return `${eta} Signal override is managed automatically when EV is within predictive threshold.`;
+  }
+  return `${aiSummary} ${recommendation} ${nearest}`;
+}
+
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
   const role = ROLE_FROM_SLUG[slug] ?? "admin";
   const [snapshot, setSnapshot] = useState<RealtimeSnapshot>(() => readSnapshot());
   const [mapMode, setMapMode] = useState<MapMode>("street");
   const [mapView, setMapView] = useState<"2d" | "3d">("2d");
+  const [mapResetToken, setMapResetToken] = useState(0);
   const [driverPov, setDriverPov] = useState(false);
+  const [manualDriveMode, setManualDriveMode] = useState(false);
+  const [manualLane, setManualLane] = useState<"left" | "center" | "right">("center");
   const [cameraHeight, setCameraHeight] = useState(18);
   const [cameraFov, setCameraFov] = useState(58);
   const [gpsStatus, setGpsStatus] = useState("Awaiting GPS signal");
@@ -224,6 +284,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   const [demoPaused, setDemoPaused] = useState(false);
   const [demoSpeedMultiplier, setDemoSpeedMultiplier] = useState(1);
   const [demoScenario, setDemoScenario] = useState<DemoScenario>("urban-peak");
+  const [activeAiModelId, setActiveAiModelId] = useState<V2XModelId>("hybrid-fusion-ops");
   const [routeProgress, setRouteProgress] = useState(0);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [predictionHorizonSeconds, setPredictionHorizonSeconds] = useState(8);
@@ -231,6 +292,14 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   const [showCommunication, setShowCommunication] = useState(true);
   const [audioMuted, setAudioMuted] = useState(false);
   const [audioVolume, setAudioVolume] = useState(65);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatbotMessage[]>([
+    {
+      id: "assistant-init",
+      role: "assistant",
+      text: "V2X Copilot online. Ask about risk, ETA, approaching vehicles, collisions, or active model.",
+    },
+  ]);
 
   const kalmanRef = useRef(new KalmanFilter2D());
   const evRawRef = useRef({
@@ -335,9 +404,42 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           approaching: metric.approaching,
         })),
         evToSignalDistance,
+        activeAiModelId,
       ),
-    [civilianMetrics, evToSignalDistance, snapshot],
+    [activeAiModelId, civilianMetrics, evToSignalDistance, snapshot],
   );
+  const activeAiModel = useMemo(
+    () =>
+      TRAINED_V2X_MODELS.find((model) => model.id === activeAiModelId) ??
+      TRAINED_V2X_MODELS.find((model) => model.id === "hybrid-fusion-ops") ??
+      TRAINED_V2X_MODELS[0],
+    [activeAiModelId],
+  );
+  const nearestApproachDistance = useMemo(() => {
+    if (civilianMetrics.length === 0) return null;
+    return civilianMetrics.reduce<number | null>(
+      (nearest, metric) => (nearest === null ? metric.distance : Math.min(nearest, metric.distance)),
+      null,
+    );
+  }, [civilianMetrics]);
+  const moveEmergencyByMeters = useCallback((distanceMeters: number, headingOffsetDegrees = 0) => {
+    const node = snapshot.vehicles.emergency;
+    const heading = node.heading + headingOffsetDegrees + (distanceMeters < 0 ? 180 : 0);
+    const next = predictFuturePosition(
+      node.kalmanLatitude,
+      node.kalmanLongitude,
+      Math.abs(distanceMeters),
+      heading,
+      1,
+    );
+    updateVehicle("emergency", {
+      latitude: next.latitude,
+      longitude: next.longitude,
+      kalmanLatitude: next.latitude,
+      kalmanLongitude: next.longitude,
+      heading: ((heading % 360) + 360) % 360,
+    });
+  }, [snapshot.vehicles.emergency]);
 
   const predictedPosition = useMemo(
     () =>
@@ -394,6 +496,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       { from: "vehicle2", to: "signal", latencyMs: baselineLatency + 14 },
     ];
   }, [demoScenario]);
+  const averageCommunicationLatency = useMemo(() => {
+    if (communicationLinks.length === 0) return null;
+    return communicationLinks.reduce((sum, link) => sum + link.latencyMs, 0) / communicationLinks.length;
+  }, [communicationLinks]);
 
   const collisionForecasts = useMemo(
     () =>
@@ -704,6 +810,27 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     return () => window.clearInterval(timer);
   }, [audioMuted, audioVolume, emergencyNode.kalmanLongitude, showCommunication, signalNode.kalmanLongitude]);
 
+  useEffect(() => {
+    if (!manualDriveMode || mapView !== "3d") return;
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
+        event.preventDefault();
+        moveEmergencyByMeters(4.5, 0);
+      } else if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        moveEmergencyByMeters(-3.5, 0);
+      } else if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        moveEmergencyByMeters(3.2, -90);
+      } else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        moveEmergencyByMeters(3.2, 90);
+      }
+    };
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [manualDriveMode, mapView, moveEmergencyByMeters]);
+
   // — control actions ————————————————————————————————————
   const setEmergencyVehicleType = (vehicleType: VehicleType) => {
     updateEmergency({ vehicleType });
@@ -764,6 +891,40 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     });
   };
 
+  const applyLanePreset = (lane: "left" | "center" | "right") => {
+    setManualLane(lane);
+    if (lane === "center") return;
+    moveEmergencyByMeters(3.2, lane === "left" ? -90 : 90);
+    appendLog({ level: "info", source: "emergency", message: `Manual lane set to ${lane.toUpperCase()}` });
+  };
+
+  const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+
+    const userMessage: ChatbotMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      text: trimmed,
+    };
+    const assistantMessage: ChatbotMessage = {
+      id: `assistant-${Date.now() + 1}`,
+      role: "assistant",
+      text: buildChatbotReply(
+        trimmed,
+        aiInsights.summary,
+        aiInsights.overall.recommendation,
+        nearestApproachDistance,
+        aiInsights.overall.etaSeconds,
+        collisionForecasts.length,
+        aiInsights.modelName,
+      ),
+    };
+    setChatMessages((messages) => [...messages, userMessage, assistantMessage].slice(-MAX_CHAT_HISTORY));
+    setChatInput("");
+  };
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <section className="animate-fade-in-up glass-panel mt-8 rounded-2xl p-6">
@@ -815,7 +976,42 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               <button type="button" className={`rounded-md px-3 py-1 ${mapView === "2d" ? "tab-active" : "border border-zinc-700 text-zinc-400"}`} onClick={() => setMapView("2d")}>2D Map</button>
               <button type="button" className={`rounded-md px-3 py-1 ${mapView === "3d" ? "tab-active" : "border border-zinc-700 text-zinc-400"}`} onClick={() => setMapView("3d")}>3D Street</button>
               <button type="button" className={`rounded-md px-3 py-1 ${driverPov ? "tab-active" : "border border-zinc-700 text-zinc-400"}`} onClick={() => setDriverPov((v) => !v)}>Driver POV</button>
+              <button type="button" className="rounded-md border border-zinc-700 px-3 py-1 text-zinc-300 hover:border-zinc-500" onClick={() => setMapResetToken((token) => token + 1)}>Reset View</button>
             </div>
+            {mapView === "3d" && (
+              <div className="space-y-2 rounded-md border border-zinc-800/80 bg-black/25 p-2 text-xs">
+                <button
+                  type="button"
+                  className={`rounded-md px-2 py-1 ${manualDriveMode ? "tab-active" : "border border-zinc-700 text-zinc-400"}`}
+                  onClick={() => setManualDriveMode((enabled) => !enabled)}
+                >
+                  {manualDriveMode ? "Manual Drive ON" : "Manual Drive OFF"}
+                </button>
+                {manualDriveMode && (
+                  <>
+                    <div className="flex flex-wrap gap-1">
+                      {(["left", "center", "right"] as const).map((lane) => (
+                        <button
+                          key={lane}
+                          type="button"
+                          className={`rounded-md px-2 py-1 uppercase ${manualLane === lane ? "tab-active" : "border border-zinc-700 text-zinc-400"}`}
+                          onClick={() => applyLanePreset(lane)}
+                        >
+                          {lane}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => moveEmergencyByMeters(3.2, -90)}>←</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => moveEmergencyByMeters(4.5)}>↑</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => moveEmergencyByMeters(-3.5)}>↓</button>
+                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => moveEmergencyByMeters(3.2, 90)}>→</button>
+                    </div>
+                    <p className="text-zinc-500">W/A/S/D or arrow keys to move in 3D.</p>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Demo Timeline</p>
@@ -856,8 +1052,20 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             <button type="button" className={`rounded-md px-3 py-1 text-xs ${showCommunication ? "tab-active" : "border border-zinc-700 text-zinc-400"}`} onClick={() => setShowCommunication((v) => !v)}>
               {showCommunication ? "V2V/V2I Visual On" : "V2V/V2I Visual Off"}
             </button>
+            <select
+              className="w-full rounded-md border border-zinc-700 bg-black px-2 py-1 text-xs text-zinc-300"
+              value={activeAiModelId}
+              onChange={(event) => setActiveAiModelId(event.target.value as V2XModelId)}
+            >
+              {TRAINED_V2X_MODELS.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
             <p className="text-xs text-zinc-500">
-              Avg latency {(communicationLinks.reduce((sum, link) => sum + link.latencyMs, 0) / communicationLinks.length).toFixed(0)}ms
+              Avg latency {averageCommunicationLatency === null ? "N/A" : `${averageCommunicationLatency.toFixed(0)}ms`} ·{" "}
+              {activeAiModel.specialization}
             </p>
           </div>
         </div>
@@ -969,6 +1177,71 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 </div>
               ))
             )}
+          </div>
+        </article>
+      </div>
+
+      <div className="mb-5 grid gap-4 xl:grid-cols-2">
+        <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <h3 className="font-semibold text-zinc-100">Approaching Vehicle Simulator</h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Icon-first view for quick readability. Active model: {aiInsights.modelName}.
+          </p>
+          <div className="mt-3 space-y-2">
+            {civilianMetrics.map((metric) => {
+              const progress = Math.max(0, Math.min(100, 100 - (metric.distance / 120) * 100));
+              return (
+                <div key={`approach-${metric.id}`} className="rounded-lg border border-zinc-800 bg-black/25 p-3">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <p className="font-medium text-zinc-100">
+                      {VEHICLE_ICON_BY_NODE_ID[metric.id] ?? "🚘"} {metric.label}
+                    </p>
+                    <p className="text-xs text-zinc-400">
+                      {metric.distance.toFixed(1)}m · {metric.approaching ? "Approaching EV 🚑" : "Moving away"}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
+                    <div
+                      className={`h-full rounded-full ${metric.alert25 ? "bg-red-400" : metric.alert50 ? "bg-amber-300" : "bg-cyan-300"}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-cyan-500/25 bg-zinc-950 p-4">
+          <h3 className="font-semibold text-zinc-100">AI Chatbot Copilot</h3>
+          <p className="mt-1 text-xs text-zinc-500">{activeAiModel.notes}</p>
+          <form onSubmit={handleChatSubmit} className="mt-3 flex gap-2">
+            <input
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
+              placeholder="Ask: risk, ETA, collisions, lane guidance..."
+              className="flex-1 rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-100 outline-none focus:border-cyan-400"
+            />
+            <button type="submit" className="btn-secondary !px-3 !py-2 !text-xs">
+              Send
+            </button>
+          </form>
+          <div className="mt-3 max-h-48 space-y-2 overflow-auto pr-1">
+            {chatMessages.map((message) => (
+              <div
+                key={message.id}
+                className={`rounded-md border px-3 py-2 text-xs ${
+                  message.role === "assistant"
+                    ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-100"
+                    : "border-zinc-700 bg-zinc-900/80 text-zinc-200"
+                }`}
+              >
+                <p className="mb-0.5 text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+                  {message.role === "assistant" ? "Copilot" : "You"}
+                </p>
+                <p>{message.text}</p>
+              </div>
+            ))}
           </div>
         </article>
       </div>
@@ -1110,26 +1383,17 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             {(["north", "south", "east", "west"] as const).map((direction) => (
               <div
                 key={direction}
-                className={`rounded-lg border p-3 transition ${
-                  snapshot.signals[direction] === "green"
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : snapshot.signals[direction] === "yellow"
-                      ? "border-yellow-500/30 bg-yellow-500/5"
-                      : "border-red-500/30 bg-red-500/5"
-                }`}
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black/35 p-3"
               >
-                <p className="text-zinc-400 uppercase text-xs">{direction}</p>
-                <p
-                  className={`mt-1 text-sm font-bold ${
-                    snapshot.signals[direction] === "green"
-                      ? "text-emerald-400"
-                      : snapshot.signals[direction] === "yellow"
-                        ? "text-yellow-400"
-                        : "text-red-400"
-                  }`}
-                >
-                  ● {snapshot.signals[direction].toUpperCase()}
-                </p>
+                <div className="flex flex-col items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2 py-2">
+                  <span className={`h-3 w-3 rounded-full border ${signalLensClass(snapshot.signals[direction] === "red", "red")}`} />
+                  <span className={`h-3 w-3 rounded-full border ${signalLensClass(snapshot.signals[direction] === "yellow", "yellow")}`} />
+                  <span className={`h-3 w-3 rounded-full border ${signalLensClass(snapshot.signals[direction] === "green", "green")}`} />
+                </div>
+                <div>
+                  <p className="text-zinc-400 uppercase text-xs">{direction}</p>
+                  <p className="mt-1 text-sm font-semibold text-zinc-200">🚦 {snapshot.signals[direction].toUpperCase()}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -1193,6 +1457,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 collisionZones={collisionForecasts}
                 communicationLinks={communicationLinks}
                 showCommunication={showCommunication}
+                resetViewToken={mapResetToken}
               />
             ) : (
               <StreetLevelMap3D
@@ -1206,6 +1471,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 driverPov={driverPov}
                 cameraHeight={cameraHeight}
                 cameraFov={cameraFov}
+                resetViewToken={mapResetToken}
               />
             )}
             <p className="mt-2 text-xs text-zinc-600">
@@ -1362,6 +1628,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 collisionZones={collisionForecasts}
                 communicationLinks={communicationLinks}
                 showCommunication={showCommunication}
+                resetViewToken={mapResetToken}
               />
             ) : (
               <StreetLevelMap3D
@@ -1375,6 +1642,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 driverPov={driverPov}
                 cameraHeight={cameraHeight}
                 cameraFov={cameraFov}
+                resetViewToken={mapResetToken}
               />
             )}
           </article>
