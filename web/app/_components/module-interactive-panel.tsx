@@ -92,6 +92,13 @@ type ChatbotMessage = {
   role: "assistant" | "user";
   text: string;
 };
+const MAX_CHAT_HISTORY = 10;
+const VEHICLE_ICON_BY_NODE_ID: Record<string, string> = {
+  emergency: "🚑",
+  signal: "🚦",
+  vehicle1: "🚗",
+  vehicle2: "🚙",
+};
 
 function drift(seed: number, scale: number): number {
   return Math.sin(seed) * scale;
@@ -402,7 +409,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     [activeAiModelId, civilianMetrics, evToSignalDistance, snapshot],
   );
   const activeAiModel = useMemo(
-    () => TRAINED_V2X_MODELS.find((model) => model.id === activeAiModelId) ?? TRAINED_V2X_MODELS[0],
+    () =>
+      TRAINED_V2X_MODELS.find((model) => model.id === activeAiModelId) ??
+      TRAINED_V2X_MODELS.find((model) => model.id === "hybrid-fusion-ops") ??
+      TRAINED_V2X_MODELS[0],
     [activeAiModelId],
   );
   const nearestApproachDistance = useMemo(() => {
@@ -486,6 +496,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
       { from: "vehicle2", to: "signal", latencyMs: baselineLatency + 14 },
     ];
   }, [demoScenario]);
+  const averageCommunicationLatency = useMemo(() => {
+    if (communicationLinks.length === 0) return null;
+    return communicationLinks.reduce((sum, link) => sum + link.latencyMs, 0) / communicationLinks.length;
+  }, [communicationLinks]);
 
   const collisionForecasts = useMemo(
     () =>
@@ -815,7 +829,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     };
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
-  }, [manualDriveMode, mapView, moveEmergencyByMeters, snapshot.vehicles.emergency.heading]);
+  }, [manualDriveMode, mapView, moveEmergencyByMeters]);
 
   // — control actions ————————————————————————————————————
   const setEmergencyVehicleType = (vehicleType: VehicleType) => {
@@ -907,7 +921,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         aiInsights.modelName,
       ),
     };
-    setChatMessages((messages) => [assistantMessage, userMessage, ...messages].slice(0, 10));
+    setChatMessages((messages) => [...messages, userMessage, assistantMessage].slice(-MAX_CHAT_HISTORY));
     setChatInput("");
   };
 
@@ -1050,7 +1064,8 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               ))}
             </select>
             <p className="text-xs text-zinc-500">
-              Avg latency {(communicationLinks.reduce((sum, link) => sum + link.latencyMs, 0) / communicationLinks.length).toFixed(0)}ms · {activeAiModel.specialization}
+              Avg latency {averageCommunicationLatency === null ? "N/A" : `${averageCommunicationLatency.toFixed(0)}ms`} ·{" "}
+              {activeAiModel.specialization}
             </p>
           </div>
         </div>
@@ -1179,7 +1194,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 <div key={`approach-${metric.id}`} className="rounded-lg border border-zinc-800 bg-black/25 p-3">
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <p className="font-medium text-zinc-100">
-                      {metric.id === "vehicle1" ? "🚗" : "🚙"} {metric.label}
+                      {VEHICLE_ICON_BY_NODE_ID[metric.id] ?? "🚘"} {metric.label}
                     </p>
                     <p className="text-xs text-zinc-400">
                       {metric.distance.toFixed(1)}m · {metric.approaching ? "Approaching EV 🚑" : "Moving away"}

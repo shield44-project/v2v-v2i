@@ -60,6 +60,14 @@ function makeLine(points: RoutePoint[]) {
   };
 }
 
+function buildStreetNodeMarkerHtml(nodeId: string, iconSize: number): string {
+  return `
+    <div style="height:${iconSize + 10}px;width:${iconSize + 10}px;border-radius:999px;border:2px solid rgba(148,163,184,0.85);background:rgba(2,6,23,0.86);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(2,6,23,0.4);">
+      <img src="${NODE_ICON_PATHS[nodeId] ?? "/vehicles/civilian-car.svg"}" alt="${NODE_EMOJI[nodeId] ?? "node"}" style="height:${iconSize}px;width:${iconSize}px;object-fit:contain;" />
+    </div>
+  `;
+}
+
 export default function StreetLevelMap3D({
   snapshot,
   route,
@@ -431,7 +439,7 @@ export default function StreetLevelMap3D({
       const markerEl = document.createElement("div");
       markerEl.className = "street-level-node";
       const iconSize = node.id === "emergency" ? 26 : 22;
-      markerEl.innerHTML = `<div style="height:${iconSize + 10}px;width:${iconSize + 10}px;border-radius:999px;border:2px solid rgba(148,163,184,0.85);background:rgba(2,6,23,0.86);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(2,6,23,0.4);"><img src="${NODE_ICON_PATHS[node.id] ?? "/vehicles/civilian-car.svg"}" alt="${NODE_EMOJI[node.id] ?? "node"}" style="height:${iconSize}px;width:${iconSize}px;object-fit:contain;" /></div>`;
+      markerEl.innerHTML = buildStreetNodeMarkerHtml(node.id, iconSize);
       const marker = new mapboxgl.Marker({ element: markerEl, anchor: "center" })
         .setLngLat([node.kalmanLongitude, node.kalmanLatitude])
         .addTo(map);

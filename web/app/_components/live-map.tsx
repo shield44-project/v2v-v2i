@@ -80,9 +80,14 @@ function FollowCenter({ center, resetToken }: { center: [number, number]; resetT
 function buildNodeIcon(nodeId: string, isFocused: boolean) {
   const imageSrc = NODE_IMAGES[nodeId] ?? "/vehicles/civilian-car.svg";
   const iconSize = isFocused ? 34 : 30;
+  const iconHtml = `
+    <div style="height:${iconSize}px;width:${iconSize}px;border-radius:999px;border:2px solid rgba(148,163,184,0.9);background:rgba(2,6,23,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(15,23,42,0.7),0 10px 20px rgba(2,6,23,0.45);">
+      <img src="${imageSrc}" alt="${nodeId}" style="height:${Math.round(iconSize * 0.74)}px;width:${Math.round(iconSize * 0.74)}px;object-fit:contain;" />
+    </div>
+  `;
   return divIcon({
     className: "v2x-node-icon",
-    html: `<div style="height:${iconSize}px;width:${iconSize}px;border-radius:999px;border:2px solid rgba(148,163,184,0.9);background:rgba(2,6,23,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(15,23,42,0.7),0 10px 20px rgba(2,6,23,0.45);"><img src="${imageSrc}" alt="${nodeId}" style="height:${Math.round(iconSize * 0.74)}px;width:${Math.round(iconSize * 0.74)}px;object-fit:contain;" /></div>`,
+    html: iconHtml,
     iconSize: [iconSize, iconSize],
     iconAnchor: [iconSize / 2, iconSize / 2],
     popupAnchor: [0, -iconSize / 2],

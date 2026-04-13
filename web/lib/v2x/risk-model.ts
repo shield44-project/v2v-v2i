@@ -75,9 +75,14 @@ export const TRAINED_V2X_MODELS: readonly V2XModelProfile[] = [
     networkPenaltyScale: 1,
   },
 ] as const;
+const DEFAULT_V2X_MODEL_ID: V2XModelId = "hybrid-fusion-ops";
 
 function getModelProfile(modelId: V2XModelId): V2XModelProfile {
-  return TRAINED_V2X_MODELS.find((profile) => profile.id === modelId) ?? TRAINED_V2X_MODELS[2];
+  return (
+    TRAINED_V2X_MODELS.find((profile) => profile.id === modelId) ??
+    TRAINED_V2X_MODELS.find((profile) => profile.id === DEFAULT_V2X_MODEL_ID) ??
+    TRAINED_V2X_MODELS[0]
+  );
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -137,7 +142,7 @@ export function generateV2XAiInsights(
   snapshot: RealtimeSnapshot,
   nodes: AiRiskNodeInput[],
   signalDistanceMeters: number,
-  modelId: V2XModelId = "hybrid-fusion-ops",
+  modelId: V2XModelId = DEFAULT_V2X_MODEL_ID,
 ): AiInsights {
   const model = getModelProfile(modelId);
   const ev = snapshot.vehicles.emergency;
