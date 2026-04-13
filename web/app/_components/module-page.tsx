@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getModuleBySlug } from "@/app/modules";
 import ModuleInteractivePanel from "@/app/_components/module-interactive-panel";
+import UserSessionPill from "@/app/_components/user-session-pill";
 
 type ModulePageProps = {
   slug: string;
@@ -26,11 +27,8 @@ export default async function ModulePage({ slug }: ModulePageProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link className="btn-secondary" href="/">Main Index</Link>
-          {session?.user ? (
-            <Link className="btn-secondary" href="/dashboard">Dashboard</Link>
-          ) : (
-            <Link className="btn-secondary" href="/signin">Sign in</Link>
-          )}
+          {session?.user && <Link className="btn-secondary" href="/dashboard">Dashboard</Link>}
+          <UserSessionPill />
         </div>
       </header>
 

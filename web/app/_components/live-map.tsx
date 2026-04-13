@@ -6,6 +6,7 @@ import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer } from "
 import { useMap } from "react-leaflet/hooks";
 import { predictFuturePosition, vincentyDistanceMeters } from "@/lib/v2x/geodesy";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
+import { COMMUNICATION_ARC_LIFT } from "@/lib/v2x/constants";
 
 export type MapMode = "street" | "walking" | "satellite";
 
@@ -16,6 +17,12 @@ type LiveMapProps = {
   focusNodeId?: string;
   /** Draw the EV predicted path polyline. */
   showPredictedPath?: boolean;
+  routePath?: [number, number][];
+  alternateRoutes?: [number, number][][];
+  selectedRouteIndex?: number;
+  collisionZones?: Array<{ latitude: number; longitude: number; severity: "warning" | "critical" }>;
+  communicationLinks?: Array<{ from: string; to: string; latencyMs: number }>;
+  showCommunication?: boolean;
 };
 
 const TILE_LAYERS: Record<MapMode, { url: string; attribution: string }> = {
@@ -70,6 +77,12 @@ export default function LiveMap({
   mode,
   focusNodeId,
   showPredictedPath = false,
+  routePath = [],
+  alternateRoutes = [],
+  selectedRouteIndex = 0,
+  collisionZones = [],
+  communicationLinks = [],
+  showCommunication = false,
 }: LiveMapProps) {
   const [trails, setTrails] = useState<Record<string, [number, number][]>>({});
   const emergency = snapshot.vehicles.emergency;
@@ -145,6 +158,88 @@ export default function LiveMap({
             }}
           />
         )}
+
+        {/* Chosen navigation route */}
+        {routePath.length > 1 && (
+          <Polyline
+            positions={routePath}
+            pathOptions={{
+              color: "#06b6d4",
+              weight: 4,
+              opacity: 0.78,
+            }}
+          />
+        )}
+        {alternateRoutes.map((alt, index) =>
+          alt.length > 1 ? (
+            <Polyline
+              key={`alt-route-${index}`}
+              positions={alt}
+              pathOptions={{
+                color: index === selectedRouteIndex ? "#22d3ee" : "#64748b",
+                weight: index === selectedRouteIndex ? 3 : 2,
+                opacity: 0.55,
+                dashArray: index === selectedRouteIndex ? "10, 6" : "5, 7",
+              }}
+            />
+          ) : null,
+        )}
+
+        {/* Collision prediction zones */}
+        {collisionZones.map((zone, index) => (
+          <Circle
+            key={`collision-zone-${index}`}
+            center={[zone.latitude, zone.longitude]}
+            radius={zone.severity === "critical" ? 18 : 12}
+            pathOptions={{
+              color: zone.severity === "critical" ? "#ef4444" : "#f59e0b",
+              fillOpacity: 0.15,
+              weight: 1.4,
+              dashArray: "5, 4",
+            }}
+          />
+        ))}
+
+        {/* V2V / V2I communication arcs */}
+        {showCommunication &&
+          communicationLinks.map((link, index) => {
+            const start = snapshot.vehicles[link.from];
+            const end = snapshot.vehicles[link.to];
+            if (!start || !end) return null;
+            const midLat = (start.kalmanLatitude + end.kalmanLatitude) / 2 + COMMUNICATION_ARC_LIFT;
+            const midLon = (start.kalmanLongitude + end.kalmanLongitude) / 2;
+            const latencyColor = link.latencyMs > 120 ? "#ef4444" : link.latencyMs > 70 ? "#f59e0b" : "#10b981";
+            const pulseFactor = (Date.now() % 1000) / 1000;
+            const pulseLat = start.kalmanLatitude + (end.kalmanLatitude - start.kalmanLatitude) * pulseFactor;
+            const pulseLon = start.kalmanLongitude + (end.kalmanLongitude - start.kalmanLongitude) * pulseFactor;
+            return (
+              <Fragment key={`comms-${link.from}-${link.to}-${index}`}>
+                <Polyline
+                  positions={[
+                    [start.kalmanLatitude, start.kalmanLongitude],
+                    [midLat, midLon],
+                    [end.kalmanLatitude, end.kalmanLongitude],
+                  ]}
+                  pathOptions={{
+                    color: latencyColor,
+                    weight: 2,
+                    opacity: 0.62,
+                    dashArray: "3, 5",
+                  }}
+                />
+                <CircleMarker
+                  center={[pulseLat, pulseLon]}
+                  radius={3.4}
+                  pathOptions={{
+                    color: latencyColor,
+                    fillColor: latencyColor,
+                    fillOpacity: 0.9,
+                    weight: 1,
+                  }}
+                />
+              </Fragment>
+            );
+          })}
 
         {/* Predicted end-point marker */}
         {showPredictedPath && predictedPath.length > 1 && (

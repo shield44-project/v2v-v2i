@@ -1,95 +1,78 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-/**
- * Opens the user's mail client with a prefilled support issue report.
- */
+const REPO_ISSUES_URL = "https://github.com/shield44-project/v2v-v2i/issues/new/choose";
+
 export default function SupportIssueMailButton() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "";
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION?.trim() || "dev";
   const isConfigured = Boolean(supportEmail);
 
-  const handleReport = () => {
-    if (!isConfigured) return;
+  const scenario = typeof window === "undefined" ? "n/a" : localStorage.getItem("v2x-demo-scenario") || "n/a";
 
+  const openMailto = () => {
+    if (!isConfigured) return;
     const now = new Date().toISOString();
-    const subject = encodeURIComponent(`V2X Support Issue: ${pathname}`);
+    const debug = typeof window !== "undefined" ? localStorage.getItem("v2x-debug-info") : null;
+    const subject = encodeURIComponent(`[V2X ${appVersion}] Issue report: ${pathname}`);
     const body = encodeURIComponent(
       [
-        "Issue details:",
-        "- What broke:",
-        "- Expected behavior:",
-        "- Actual behavior:",
+        "Please describe the issue below:",
+        "- What happened:",
+        "- Expected:",
         "",
-        "Context (auto-filled):",
+        "Auto-filled context:",
+        `- App version: ${appVersion}`,
+        `- Scenario: ${scenario}`,
         `- Page: ${pathname}`,
         `- Time (UTC): ${now}`,
-        `- Browser: ${navigator.userAgent}`,
-      ].join("\n"),
+        `- Browser: ${typeof navigator !== "undefined" ? navigator.userAgent : "n/a"}`,
+        debug ? `- Debug: ${debug}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
     );
-
     window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
+    setOpen(false);
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleReport}
-      disabled={!isConfigured}
-      aria-label="Report issue by email"
-      title={
-        isConfigured
-          ? "Send issue report by email"
-          : "Set NEXT_PUBLIC_SUPPORT_EMAIL to enable issue reporting"
-      }
-      style={{
-        position: "fixed",
-        bottom: "1.25rem",
-        right: "1.25rem",
-        zIndex: 50,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "8px 16px",
-        borderRadius: "9999px",
-        border: "1px solid rgba(0,229,255,0.3)",
-        background: "rgba(0,229,255,0.06)",
-        color: isConfigured ? "#67e8f9" : "#71717a",
-        fontSize: "0.8rem",
-        fontWeight: 600,
-        cursor: isConfigured ? "pointer" : "default",
-        backdropFilter: "blur(8px)",
-        transition: "all 0.2s ease",
-        boxShadow: isConfigured ? "0 0 12px rgba(0,229,255,0.1)" : "none",
-      }}
-      onMouseEnter={(e) => {
-        if (!isConfigured) return;
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.6)";
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,229,255,0.2)";
-        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,229,255,0.1)";
-      }}
-      onMouseLeave={(e) => {
-        if (!isConfigured) return;
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.3)";
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 12px rgba(0,229,255,0.1)";
-        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,229,255,0.06)";
-      }}
-    >
-      {isConfigured && (
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#00e5ff",
-            boxShadow: "0 0 6px #00e5ff",
-            animation: "glowPulse 2s ease-in-out infinite",
-            flexShrink: 0,
-          }}
-        />
+    <div className="fixed bottom-5 right-5 z-50">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-zinc-950/90 px-4 py-2 text-xs font-semibold text-cyan-200 shadow-[0_0_16px_rgba(0,229,255,0.2)] backdrop-blur"
+      >
+        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+        Report Issue
+      </button>
+      {open && (
+        <div className="mt-2 min-w-[260px] rounded-xl border border-zinc-700 bg-zinc-950/95 p-3 text-xs text-zinc-300 shadow-2xl backdrop-blur">
+          <p className="mb-2 text-zinc-400">v{appVersion} · scenario: {scenario}</p>
+          <button
+            type="button"
+            onClick={openMailto}
+            disabled={!isConfigured}
+            className="mb-2 w-full rounded-md border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-left text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+            title={isConfigured ? "Open prefilled mail compose" : "Set NEXT_PUBLIC_SUPPORT_EMAIL to enable mailto"}
+          >
+            Email Support (mailto)
+          </button>
+          <a
+            href={REPO_ISSUES_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="block w-full rounded-md border border-zinc-700 bg-black/40 px-3 py-2 text-left text-zinc-200 hover:border-zinc-500"
+            onClick={() => setOpen(false)}
+          >
+            Open GitHub Issues
+          </a>
+        </div>
       )}
-      {isConfigured ? "Report Issue" : "Issue Email Not Configured"}
-    </button>
+    </div>
   );
 }

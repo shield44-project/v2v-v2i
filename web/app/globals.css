@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+@import "mapbox-gl/dist/mapbox-gl.css";
 
 :root {
   --background: #050505;
@@ -467,6 +468,16 @@ input:focus, select:focus {
   50% { transform: translateY(-2px); }
 }
 
+@keyframes heroPulse {
+  0%, 100% { transform: translateZ(0) scale(1); filter: brightness(1); }
+  50% { transform: translateZ(0) scale(1.006); filter: brightness(1.04); }
+}
+
+@keyframes shimmerSweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+
 .glass-panel {
   background: linear-gradient(145deg, rgba(12, 12, 18, 0.78), rgba(5, 5, 10, 0.58));
   backdrop-filter: blur(10px);
@@ -559,4 +570,38 @@ input:focus, select:focus {
 
 .float-soft {
   animation: cardFloat 2.4s ease-in-out infinite;
+}
+
+.hero-immersive {
+  animation: heroPulse 6s ease-in-out infinite;
+  transform: translateZ(0);
+  will-change: transform, filter;
+}
+
+.micro-interaction {
+  position: relative;
+  overflow: hidden;
+}
+
+.micro-interaction::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(110deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmerSweep 4.8s linear infinite;
+  pointer-events: none;
+}
+
+.street-level-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(103, 232, 249, 0.5);
+  background: rgba(3, 7, 18, 0.82);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
 }

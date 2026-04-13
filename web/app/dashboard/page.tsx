@@ -1,7 +1,8 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { moduleDefinitions } from "@/app/modules";
+import UserSessionPill from "@/app/_components/user-session-pill";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -33,16 +34,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link className="btn-secondary" href="/">Main Index</Link>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            <button className="btn-secondary cursor-pointer" type="submit">
-              Sign out
-            </button>
-          </form>
+          <UserSessionPill />
         </div>
       </header>
 

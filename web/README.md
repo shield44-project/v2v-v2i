@@ -7,3 +7,5 @@ This directory contains the active V2X web application built with Next.js and Ty
 - App modules are fully implemented as Next.js routes: `/control`, `/emergency`, `/signal`, `/vehicle1`, `/vehicle2`, `/admin`, `/admin-preview`, `/user-portal`
 - Realtime V2X architecture and Vercel schema/listener instructions are documented in `VERCEL_REALTIME_GUIDE.md`
 - See the repository root `README.md` for full setup and Vercel deployment steps
+- 3D street-level mode uses Mapbox + Three.js when `NEXT_PUBLIC_MAPBOX_TOKEN` is set, with built-in fallback when it is not
+- Demo mode (start/pause/reset, speed, scenario) runs locally without external realtime dependencies
