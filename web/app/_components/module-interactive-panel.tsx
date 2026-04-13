@@ -978,7 +978,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="glass-panel layered-card rounded-xl p-4">
-            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning</h3>
+            <h3 className="font-semibold mb-3 text-zinc-100">Vehicle Motion Tuning</h3>
             <div className="grid gap-3 lg:grid-cols-2">
               {(["vehicle1", "vehicle2"] as const).map((nodeId) => {
                 const node = snapshot.vehicles[nodeId];
