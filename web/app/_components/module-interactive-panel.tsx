@@ -985,7 +985,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="glass-panel layered-card rounded-xl p-4">
-            <h3 className="font-semibold mb-3 text-zinc-100">Vehicle Motion Tuning</h3>
+            <h3 className="mb-3 font-semibold text-zinc-100">Vehicle Motion Tuning</h3>
             <div className="grid gap-3 lg:grid-cols-2">
               {(["vehicle1", "vehicle2"] as const).map((nodeId) => {
                 const node = snapshot.vehicles[nodeId];
@@ -1036,7 +1036,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-            <h3 className="font-semibold text-zinc-100 mb-3">Node Status</h3>
+            <h3 className="mb-3 font-semibold text-zinc-100">Node Status</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {Object.values(snapshot.vehicles).map((node) => (
                 <div key={node.id} className="rounded-lg border border-zinc-800 p-3 text-sm">
@@ -1081,7 +1081,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-            <h3 className="font-semibold text-zinc-100 mb-3">Live Logs</h3>
+            <h3 className="mb-3 font-semibold text-zinc-100">Live Logs</h3>
             <div className="max-h-64 overflow-auto space-y-2 pr-1">
               {snapshot.logs.length === 0 ? (
                 <p className="text-zinc-600 text-sm">No events yet.</p>
