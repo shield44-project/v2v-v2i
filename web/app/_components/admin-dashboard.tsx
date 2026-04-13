@@ -155,9 +155,9 @@ export default function AdminDashboard({ currentUserEmail, isInitiallyAdmin }: A
       overrides > 0
         ? logs
             .filter((l) => l.source === "signal" && l.level === "critical")
-            .reduce((_acc, l) => {
+            .reduce((acc, l) => {
               const m = l.message.match(/\((\d+\.?\d*)m\)/);
-              return m ? parseFloat(m[1]) : 0;
+              return acc + (m ? parseFloat(m[1]) : 0);
             }, 0) / overrides
         : 0;
 

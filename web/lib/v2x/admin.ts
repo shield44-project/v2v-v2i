@@ -1,6 +1,9 @@
 import type { UserRecord } from "@/lib/v2x/types";
 
 // ── Hardcoded admin allow-list ──────────────────────────────────────────────
+// NOTE: These emails are project-specific and configured as required by the
+// deployment owner. For production systems move these to an environment
+// variable (e.g. ADMIN_EMAILS) so they are not stored in source control.
 export const ADMIN_EMAILS_HARDCODED: readonly string[] = [
   "ksthejas060@gmail.com",
   "kstejas2718@gmail.com",
@@ -8,6 +11,9 @@ export const ADMIN_EMAILS_HARDCODED: readonly string[] = [
 ] as const;
 
 // ── Demo admin credentials (fallback for non-Google access) ────────────────
+// ⚠️  DEMO USE ONLY — these are hardcoded as required for this project.
+// In a production deployment replace with a server-side auth check against
+// a hashed secret stored in an environment variable, never plain text.
 const ADMIN_CRED_USERNAME = "admin";
 const ADMIN_CRED_PASSWORD = "V2X@2024";
 

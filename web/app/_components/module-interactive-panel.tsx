@@ -123,10 +123,6 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   );
 
   const civilianMetrics = useMemo(() => {
-    const evHeadRad = (emergencyNode.heading * Math.PI) / 180;
-    const evDirX = Math.sin(evHeadRad);
-    const evDirY = Math.cos(evHeadRad);
-
     return civilianNodes.map((node) => {
       const distance = vincentyDistanceMeters(
         node.kalmanLatitude,
@@ -135,9 +131,13 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         emergencyNode.kalmanLongitude,
       );
 
-      const relX = node.kalmanLongitude - emergencyNode.kalmanLongitude;
-      const relY = node.kalmanLatitude - emergencyNode.kalmanLatitude;
-      const approaching = evDirX * relX + evDirY * relY > 0;
+      const approaching = isEvApproaching(
+        emergencyNode.kalmanLatitude,
+        emergencyNode.kalmanLongitude,
+        emergencyNode.heading,
+        node.kalmanLatitude,
+        node.kalmanLongitude,
+      );
 
       const bearingToEV = bearingBetweenCoordinates(
         node.kalmanLatitude,
