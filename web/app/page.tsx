@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/auth";
 import { moduleDefinitions } from "@/app/modules";
+import UserSessionPill from "@/app/_components/user-session-pill";
 
 const appNodes = moduleDefinitions;
 
@@ -23,17 +24,14 @@ export default async function Home() {
             <span className="status-badge-dot" />
             System Online
           </span>
-          {session?.user ? (
-            <Link className="btn-secondary" href="/dashboard">Dashboard</Link>
-          ) : (
-            <Link className="btn-secondary" href="/signin">Sign in</Link>
-          )}
+          {session?.user && <Link className="btn-secondary" href="/dashboard">Dashboard</Link>}
+          <UserSessionPill />
         </div>
       </header>
 
       {/* hero */}
       <section
-        className="hero-glow scanline-wrap animate-fade-in-up rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl"
+        className="hero-glow hero-immersive scanline-wrap animate-fade-in-up rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl"
         style={{ animationDelay: "60ms" }}
       >
         <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
@@ -50,9 +48,9 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               {session?.user ? (
-                <Link className="btn-primary" href="/dashboard">Open Dashboard</Link>
+                <Link className="btn-primary micro-interaction" href="/dashboard">Open Dashboard</Link>
               ) : (
-                <Link className="btn-primary" href="/signin">Sign in</Link>
+                <Link className="btn-primary micro-interaction" href="/signin">Sign in</Link>
               )}
             </div>
           </div>

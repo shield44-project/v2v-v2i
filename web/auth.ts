@@ -8,6 +8,9 @@ const googleClientId =
 const googleClientSecret =
   process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET;
 const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+const effectiveAuthSecret =
+  authSecret ??
+  (process.env.NODE_ENV !== "production" ? "local-demo-auth-secret" : undefined);
 const hasGoogleOAuth = Boolean(googleClientId && googleClientSecret);
 const EIGHT_HOURS_IN_SECONDS = 8 * 60 * 60;
 
@@ -19,7 +22,7 @@ if (process.env.VERCEL && !authSecret) {
 
 if (process.env.NODE_ENV === "development" && !process.env.VERCEL && !authSecret) {
   process.emitWarning(
-    "AUTH_SECRET/NEXTAUTH_SECRET is not set. Configure it to avoid local auth/session issues.",
+    "AUTH_SECRET/NEXTAUTH_SECRET is not set. Using local demo fallback secret; configure a real secret for non-demo usage.",
   );
 }
 
@@ -37,7 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }),
       ]
     : [],
-  secret: authSecret,
+  secret: effectiveAuthSecret,
   pages: {
     signIn: "/signin",
   },

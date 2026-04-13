@@ -225,3 +225,89 @@ export function getYieldAction(
   // EV is to the left of civilian's heading → civilian moves right
   return { action: "Move Right", arrow: "➡️" };
 }
+
+export type CollisionForecast = {
+  nodeId: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+  secondsAhead: number;
+  severity: "warning" | "critical";
+};
+
+export function predictEmergencyCollisions(
+  emergency: {
+    kalmanLatitude: number;
+    kalmanLongitude: number;
+    speed: number;
+    heading: number;
+  },
+  others: Array<{
+    id: string;
+    kalmanLatitude: number;
+    kalmanLongitude: number;
+    speed: number;
+    heading: number;
+  }>,
+  horizonSeconds: number,
+  safetyRadiusMeters: number,
+): CollisionForecast[] {
+  const forecasts: CollisionForecast[] = [];
+  const horizon = Math.max(1, Math.floor(horizonSeconds));
+  const radius = Math.max(1, safetyRadiusMeters);
+
+  others.forEach((node) => {
+    let best:
+      | {
+          distance: number;
+          second: number;
+          latitude: number;
+          longitude: number;
+        }
+      | null = null;
+
+    for (let second = 1; second <= horizon; second += 1) {
+      const evPos = predictFuturePosition(
+        emergency.kalmanLatitude,
+        emergency.kalmanLongitude,
+        emergency.speed,
+        emergency.heading,
+        second,
+      );
+      const nodePos = predictFuturePosition(
+        node.kalmanLatitude,
+        node.kalmanLongitude,
+        node.speed,
+        node.heading,
+        second,
+      );
+      const distance = vincentyDistanceMeters(
+        evPos.latitude,
+        evPos.longitude,
+        nodePos.latitude,
+        nodePos.longitude,
+      );
+      if (!best || distance < best.distance) {
+        best = {
+          distance,
+          second,
+          latitude: (evPos.latitude + nodePos.latitude) / 2,
+          longitude: (evPos.longitude + nodePos.longitude) / 2,
+        };
+      }
+    }
+
+    if (!best || best.distance > radius) return;
+
+    forecasts.push({
+      nodeId: node.id,
+      latitude: best.latitude,
+      longitude: best.longitude,
+      distanceMeters: best.distance,
+      secondsAhead: best.second,
+      severity: best.distance <= radius * 0.6 ? "critical" : "warning",
+    });
+  });
+
+  return forecasts.sort((a, b) => a.secondsAhead - b.secondsAhead || a.distanceMeters - b.distanceMeters);
+}

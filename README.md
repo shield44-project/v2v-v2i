@@ -23,7 +23,13 @@ Firebase auth/runtime files have been removed from the active app path.
    - Client Secret
 
 ### B. Set environment variables
-In `./web`, create `.env.local` manually and add:
+In `./web`, copy `.env.example` to `.env.local` and fill values:
+
+```bash
+cp .env.example .env.local
+```
+
+Then configure:
 
 - `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
 - `AUTH_GOOGLE_ID` (or `GOOGLE_CLIENT_ID`)
@@ -31,6 +37,8 @@ In `./web`, create `.env.local` manually and add:
 - `AUTH_URL` (`http://localhost:3000` locally, preferred)
 - `NEXTAUTH_URL` (`http://localhost:3000` locally, legacy compatibility)
 - `NEXT_PUBLIC_SUPPORT_EMAIL` (email that receives "Report Issue" messages)
+- `NEXT_PUBLIC_MAPBOX_TOKEN` (optional; enables 3D street-level Mapbox view)
+- `NEXT_PUBLIC_APP_VERSION` (optional; included in Report Issue prefill)
 
 ### C. Configure Vercel project variables
 In Vercel Project Settings → Environment Variables, add:
@@ -40,6 +48,8 @@ In Vercel Project Settings → Environment Variables, add:
 - `AUTH_URL=https://<your-vercel-domain>` (preferred)
 - `NEXTAUTH_URL=https://<your-vercel-domain>` (legacy compatibility)
 - `NEXT_PUBLIC_SUPPORT_EMAIL=<your-support-email>`
+- `NEXT_PUBLIC_MAPBOX_TOKEN=<mapbox-public-token>`
+- `NEXT_PUBLIC_APP_VERSION=<release-label>`
 
 ## 2) Local run
 
@@ -58,6 +68,7 @@ Open `http://localhost:3000`.
 - After Google login, user lands on `/dashboard`.
 - `/dashboard` is inaccessible when signed out (redirects to `/signin`).
 - Sign out returns to `/`.
+- Module pages run in demo mode even without Mapbox token (2D + fallback 3D panel).
 
 ## 4) Security baseline included
 
@@ -84,6 +95,7 @@ For a full ADMIN_GUIDE-style setup on Vercel (without Firebase), use:
 
 ## 6) Support issue email flow
 
-- A global **Report Issue** button is shown in the app.
-- Clicking it opens a prefilled email with page path, timestamp, and browser context.
+- A global **Report Issue** launcher is shown in the app.
+- It opens a prefilled `mailto:` compose (with app version, scenario, page, browser/debug context).
+- It also links directly to this repository's GitHub issues page.
 - Configure recipient with `NEXT_PUBLIC_SUPPORT_EMAIL` (required to enable the button).
