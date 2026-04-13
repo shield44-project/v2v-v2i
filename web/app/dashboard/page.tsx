@@ -3,18 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { moduleDefinitions } from "@/app/modules";
+import { moduleVisualBySlug } from "@/app/module-visuals";
 import UserSessionPill from "@/app/_components/user-session-pill";
-
-const moduleVisualBySlug: Record<string, string> = {
-  control: "/flash/city-grid.svg",
-  emergency: "/icons/broadcasting.svg",
-  signal: "/icons/monitoring.svg",
-  vehicle1: "/vehicles/civilian-car.svg",
-  vehicle2: "/vehicles/civilian-car.svg",
-  admin: "/flash/city-grid.svg",
-  "admin-preview": "/flash/city-grid.svg",
-  "user-portal": "/ai-orb.svg",
-};
 
 export default async function DashboardPage() {
   const session = await auth();
