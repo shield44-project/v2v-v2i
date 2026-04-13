@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
+import { useMap } from "react-leaflet/hooks";
 import type { RealtimeSnapshot } from "@/lib/v2x/types";
 
 type MapMode = "street" | "walking";
@@ -28,6 +30,16 @@ const NODE_COLORS: Record<string, string> = {
   vehicle2: "#a855f7",
 };
 
+function FollowCenter({ center }: { center: [number, number] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center);
+  }, [center, map]);
+
+  return null;
+}
+
 export default function LiveMap({ snapshot, mode }: LiveMapProps) {
   const emergency = snapshot.vehicles.emergency;
   const center: [number, number] = [
@@ -39,7 +51,13 @@ export default function LiveMap({ snapshot, mode }: LiveMapProps) {
 
   return (
     <div className="h-[420px] overflow-hidden rounded-xl border border-zinc-800">
-      <MapContainer center={center} zoom={18} scrollWheelZoom className="h-full w-full">
+      <MapContainer
+        center={center}
+        zoom={18}
+        scrollWheelZoom
+        className="h-full w-full"
+      >
+        <FollowCenter center={center} />
         <TileLayer attribution={tileLayer.attribution} url={tileLayer.url} />
 
         {Object.values(snapshot.vehicles).map((node) => {

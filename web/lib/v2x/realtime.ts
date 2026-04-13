@@ -3,7 +3,6 @@
 import { io, type Socket } from "socket.io-client";
 import type { RealtimeSnapshot, TelemetryNode, V2XLog, SignalState, EmergencyState } from "@/lib/v2x/types";
 
-const STORAGE_KEY = "v2x-realtime-state-v1";
 const CHANNEL_KEY = "v2x-realtime-channel";
 const MAX_LOGS = 150;
 
@@ -95,6 +94,7 @@ let socket: Socket | null = null;
 let eventSource: EventSource | null = null;
 const listeners = new Set<SnapshotListener>();
 let initialized = false;
+let logSequence = 0;
 
 async function syncToVercel(snapshot: RealtimeSnapshot): Promise<void> {
   if (typeof window === "undefined") return;
@@ -123,7 +123,24 @@ function safeParseSnapshot(value: string): RealtimeSnapshot | null {
   }
 }
 
+function isIncomingSnapshotNewer(current: RealtimeSnapshot, incoming: RealtimeSnapshot): boolean {
+  return new Date(incoming.updatedAt).getTime() >= new Date(current.updatedAt).getTime();
+}
+
+function newLogId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  logSequence += 1;
+  return `log-${Date.now()}-${logSequence}`;
+}
+
 function publish(nextSnapshot: RealtimeSnapshot, source: "local" | "broadcast" | "socket"): void {
+  if (source !== "local" && !isIncomingSnapshotNewer(state, nextSnapshot)) {
+    return;
+  }
+
   state = nextSnapshot;
   listeners.forEach((listener) => listener(state));
 
@@ -135,10 +152,6 @@ function publish(nextSnapshot: RealtimeSnapshot, source: "local" | "broadcast" |
     socket.emit("v2x-sync", state);
   }
 
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
-
   if (source === "local") {
     void syncToVercel(state);
   }
@@ -148,27 +161,10 @@ function initTransport(): void {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
 
-  const cached = window.localStorage.getItem(STORAGE_KEY);
-  if (cached) {
-    const parsed = safeParseSnapshot(cached);
-    if (parsed) {
-      state = parsed;
-    }
-  }
-
   channel = new BroadcastChannel(CHANNEL_KEY);
   channel.onmessage = (event: MessageEvent<RealtimeSnapshot>) => {
     publish(event.data, "broadcast");
   };
-
-  window.addEventListener("storage", (event) => {
-    if (event.key !== STORAGE_KEY || !event.newValue) return;
-    const parsed = safeParseSnapshot(event.newValue);
-    if (parsed) {
-      state = parsed;
-      listeners.forEach((listener) => listener(state));
-    }
-  });
 
   const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
   if (socketUrl) {
@@ -214,7 +210,7 @@ export function appendLog(log: Omit<V2XLog, "id" | "timestamp">): void {
     ...previous,
     logs: [
       {
-        id: crypto.randomUUID(),
+        id: newLogId(),
         timestamp: new Date().toISOString(),
         ...log,
       },

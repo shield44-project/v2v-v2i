@@ -39,6 +39,13 @@ const ROLE_FROM_SLUG: Record<string, NodeRole> = {
   "user-portal": "admin",
 };
 
+const EV_DRIFT_LAT_FREQUENCY = 0.45;
+const EV_DRIFT_LNG_FREQUENCY = 0.41;
+const EV_DRIFT_AMPLITUDE = 0.00001;
+const MIN_GPS_ACCURACY_METERS = 2.5;
+const MAX_GPS_ACCURACY_METERS = 35;
+const DEFAULT_GPS_ACCURACY_METERS = 8;
+
 function drift(seed: number, scale: number): number {
   return Math.sin(seed) * scale;
 }
@@ -94,6 +101,8 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   const warningRef = useRef(false);
   const signalOverrideRef = useRef<"normal" | "override">(snapshot.signals.mode);
   const geoWatchRef = useRef<number | null>(null);
+  const snapshotRef = useRef(snapshot);
+  const connectionRef = useRef(connectionStatus);
 
   const emergencyNode = snapshot.vehicles.emergency;
   const signalNode = snapshot.vehicles.signal;
@@ -168,6 +177,14 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
   }, []);
 
   useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
+
+  useEffect(() => {
+    connectionRef.current = connectionStatus;
+  }, [connectionStatus]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const updateConnection = () => {
@@ -201,13 +218,16 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         updateVehicle("emergency", {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy: Math.min(35, Math.max(2.5, position.coords.accuracy || 8)),
-          speed: Math.max(0, position.coords.speed ?? emergencyNode.speed),
+          accuracy: Math.min(
+            MAX_GPS_ACCURACY_METERS,
+            Math.max(MIN_GPS_ACCURACY_METERS, position.coords.accuracy || DEFAULT_GPS_ACCURACY_METERS),
+          ),
+          speed: Math.max(0, position.coords.speed ?? snapshotRef.current.vehicles.emergency.speed),
           heading:
             position.coords.heading ??
             bearingBetweenCoordinates(
-              emergencyNode.latitude,
-              emergencyNode.longitude,
+              snapshotRef.current.vehicles.emergency.latitude,
+              snapshotRef.current.vehicles.emergency.longitude,
               position.coords.latitude,
               position.coords.longitude,
             ),
@@ -224,15 +244,21 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         navigator.geolocation.clearWatch(geoWatchRef.current);
       }
     };
-  }, [emergencyNode.latitude, emergencyNode.longitude, emergencyNode.speed]);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      const currentSnapshot = snapshotRef.current;
+      const currentEmergencyNode = currentSnapshot.vehicles.emergency;
+      const currentSignalNode = currentSnapshot.vehicles.signal;
       tickRef.current += 1;
 
-      const nextEmergencyLat = evRawRef.current.latitude + drift(tickRef.current * 0.45, 0.00001);
-      const nextEmergencyLng = evRawRef.current.longitude + drift(tickRef.current * 0.41, 0.00001);
-      const kalmanPoint = snapshot.emergency.kalmanEnabled
+      const nextEmergencyLat =
+        evRawRef.current.latitude + drift(tickRef.current * EV_DRIFT_LAT_FREQUENCY, EV_DRIFT_AMPLITUDE);
+      const nextEmergencyLng =
+        evRawRef.current.longitude + drift(tickRef.current * EV_DRIFT_LNG_FREQUENCY, EV_DRIFT_AMPLITUDE);
+      evRawRef.current = { latitude: nextEmergencyLat, longitude: nextEmergencyLng };
+      const kalmanPoint = currentSnapshot.emergency.kalmanEnabled
         ? kalmanRef.current.update({ latitude: nextEmergencyLat, longitude: nextEmergencyLng })
         : { latitude: nextEmergencyLat, longitude: nextEmergencyLng };
 
@@ -241,42 +267,42 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         longitude: nextEmergencyLng,
         kalmanLatitude: kalmanPoint.latitude,
         kalmanLongitude: kalmanPoint.longitude,
-        speed: Math.max(2, Math.min(22, emergencyNode.speed + drift(tickRef.current * 0.33, 0.5))),
-        heading: (emergencyNode.heading + 4 + drift(tickRef.current * 0.21, 2)) % 360,
-        broadcastEnabled: snapshot.emergency.active,
-        vehicleType: snapshot.emergency.vehicleType,
-        connectionStatus: connectionStatus === "connected" ? "connected" : "degraded",
+        speed: Math.max(2, Math.min(22, currentEmergencyNode.speed + drift(tickRef.current * 0.33, 0.5))),
+        heading: (currentEmergencyNode.heading + 4 + drift(tickRef.current * 0.21, 2)) % 360,
+        broadcastEnabled: currentSnapshot.emergency.active,
+        vehicleType: currentSnapshot.emergency.vehicleType,
+        connectionStatus: connectionRef.current === "connected" ? "connected" : "degraded",
       });
 
       updateVehicle("vehicle1", {
-        latitude: snapshot.vehicles.vehicle1.latitude + drift(tickRef.current * 0.24, 0.000015),
-        longitude: snapshot.vehicles.vehicle1.longitude + drift(tickRef.current * 0.19, 0.000015),
+        latitude: currentSnapshot.vehicles.vehicle1.latitude + drift(tickRef.current * 0.24, 0.000015),
+        longitude: currentSnapshot.vehicles.vehicle1.longitude + drift(tickRef.current * 0.19, 0.000015),
         kalmanLatitude:
-          snapshot.vehicles.vehicle1.kalmanLatitude + drift(tickRef.current * 0.24, 0.000013),
+          currentSnapshot.vehicles.vehicle1.kalmanLatitude + drift(tickRef.current * 0.24, 0.000013),
         kalmanLongitude:
-          snapshot.vehicles.vehicle1.kalmanLongitude + drift(tickRef.current * 0.19, 0.000013),
-        heading: (snapshot.vehicles.vehicle1.heading + 2) % 360,
+          currentSnapshot.vehicles.vehicle1.kalmanLongitude + drift(tickRef.current * 0.19, 0.000013),
+        heading: (currentSnapshot.vehicles.vehicle1.heading + 2) % 360,
       });
 
       updateVehicle("vehicle2", {
-        latitude: snapshot.vehicles.vehicle2.latitude + drift(tickRef.current * 0.27, 0.000013),
-        longitude: snapshot.vehicles.vehicle2.longitude + drift(tickRef.current * 0.22, 0.000013),
+        latitude: currentSnapshot.vehicles.vehicle2.latitude + drift(tickRef.current * 0.27, 0.000013),
+        longitude: currentSnapshot.vehicles.vehicle2.longitude + drift(tickRef.current * 0.22, 0.000013),
         kalmanLatitude:
-          snapshot.vehicles.vehicle2.kalmanLatitude + drift(tickRef.current * 0.27, 0.000011),
+          currentSnapshot.vehicles.vehicle2.kalmanLatitude + drift(tickRef.current * 0.27, 0.000011),
         kalmanLongitude:
-          snapshot.vehicles.vehicle2.kalmanLongitude + drift(tickRef.current * 0.22, 0.000011),
-        heading: (snapshot.vehicles.vehicle2.heading + 1.5) % 360,
+          currentSnapshot.vehicles.vehicle2.kalmanLongitude + drift(tickRef.current * 0.22, 0.000011),
+        heading: (currentSnapshot.vehicles.vehicle2.heading + 1.5) % 360,
       });
 
       const evDistance = vincentyDistanceMeters(
         kalmanPoint.latitude,
         kalmanPoint.longitude,
-        signalNode.kalmanLatitude,
-        signalNode.kalmanLongitude,
+        currentSignalNode.kalmanLatitude,
+        currentSignalNode.kalmanLongitude,
       );
 
-      if (snapshot.emergency.active && evDistance <= 50) {
-        const overrideDirection = headingToDirection(emergencyNode.heading);
+      if (currentSnapshot.emergency.active && evDistance <= 50) {
+        const overrideDirection = headingToDirection(currentEmergencyNode.heading);
         updateSignals({
           ...signalTemplate(overrideDirection),
           mode: "override",
@@ -299,26 +325,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [
-    connectionStatus,
-    emergencyNode.heading,
-    emergencyNode.speed,
-    signalNode.kalmanLatitude,
-    signalNode.kalmanLongitude,
-    snapshot.emergency.active,
-    snapshot.emergency.kalmanEnabled,
-    snapshot.emergency.vehicleType,
-    snapshot.vehicles.vehicle1.heading,
-    snapshot.vehicles.vehicle1.kalmanLatitude,
-    snapshot.vehicles.vehicle1.kalmanLongitude,
-    snapshot.vehicles.vehicle1.latitude,
-    snapshot.vehicles.vehicle1.longitude,
-    snapshot.vehicles.vehicle2.heading,
-    snapshot.vehicles.vehicle2.kalmanLatitude,
-    snapshot.vehicles.vehicle2.kalmanLongitude,
-    snapshot.vehicles.vehicle2.latitude,
-    snapshot.vehicles.vehicle2.longitude,
-  ]);
+  }, []);
 
   useEffect(() => {
     const anyWarning = civilianMetrics.some((metric) => metric.warning);
@@ -421,6 +428,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               <button
                 type="button"
                 onClick={toggleBroadcast}
+                aria-label="Toggle emergency broadcast"
                 className={`h-24 w-24 rounded-full border text-xs font-semibold tracking-wide transition ${snapshot.emergency.active ? "border-red-500 bg-red-500/20 text-red-200 shadow-[0_0_25px_rgba(255,34,51,0.45)]" : "border-zinc-700 bg-zinc-900 text-zinc-300"}`}
               >
                 {snapshot.emergency.active ? "BROADCAST ON" : "BROADCAST OFF"}

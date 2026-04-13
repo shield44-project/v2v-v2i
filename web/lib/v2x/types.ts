@@ -57,6 +57,7 @@ export type RealtimeSnapshot = {
   updatedAt: string;
 };
 
+/** Canonical Vercel storage paths for backend listeners and sync handlers. */
 export const VERCEL_SCHEMA_PATHS = {
   vehicles: "/vehicles/{id}",
   emergency: "/emergency",
