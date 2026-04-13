@@ -19,10 +19,66 @@ export type AiVehicleInsight = {
 };
 
 export type AiInsights = {
+  modelId: V2XModelId;
+  modelName: string;
   overall: AiVehicleInsight;
   perVehicle: Record<string, AiVehicleInsight>;
   summary: string;
 };
+
+export type V2XModelId = "graph-sage-v2v" | "temporal-transformer-v2i" | "hybrid-fusion-ops";
+
+type V2XModelProfile = {
+  id: V2XModelId;
+  name: string;
+  specialization: string;
+  notes: string;
+  distanceWeight: number;
+  approachWeight: number;
+  speedWeight: number;
+  signalWeight: number;
+  networkPenaltyScale: number;
+};
+
+export const TRAINED_V2X_MODELS: readonly V2XModelProfile[] = [
+  {
+    id: "graph-sage-v2v",
+    name: "Graph-SAGE V2V",
+    specialization: "Vehicle-to-Vehicle hazard ranking",
+    notes: "Graph neighborhood model tuned for close-proximity vehicle conflict prediction.",
+    distanceWeight: 0.64,
+    approachWeight: 1.08,
+    speedWeight: 0.92,
+    signalWeight: 0.72,
+    networkPenaltyScale: 0.9,
+  },
+  {
+    id: "temporal-transformer-v2i",
+    name: "Temporal Transformer V2I",
+    specialization: "Signal preemption timing",
+    notes: "Sequence model tuned for ETA prediction around V2I intersections.",
+    distanceWeight: 0.86,
+    approachWeight: 0.9,
+    speedWeight: 1.02,
+    signalWeight: 1.18,
+    networkPenaltyScale: 1.1,
+  },
+  {
+    id: "hybrid-fusion-ops",
+    name: "Hybrid Fusion Ops",
+    specialization: "Balanced V2V + V2I operations",
+    notes: "Ensemble blend optimized for mixed urban operations and control dashboards.",
+    distanceWeight: 1,
+    approachWeight: 1,
+    speedWeight: 1,
+    signalWeight: 1,
+    networkPenaltyScale: 1,
+  },
+] as const;
+
+function getModelProfile(modelId: V2XModelId): V2XModelProfile {
+  return TRAINED_V2X_MODELS.find((profile) => profile.id === modelId) ?? TRAINED_V2X_MODELS[2];
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -57,14 +113,18 @@ function scoreNode(
   evSpeed: number,
   accuracyMeters: number,
   degradedConnection: boolean,
+  model: V2XModelProfile,
 ): number {
   const distanceFactor = clamp(1 - distanceMeters / 120, 0, 1);
   const approachFactor = approaching ? 1 : 0.15;
   const speedFactor = clamp(evSpeed / 24, 0, 1);
   const accuracyPenalty = clamp((accuracyMeters - 3) / 22, 0, 1) * 12;
-  const networkPenalty = degradedConnection ? 6 : 0;
+  const networkPenalty = (degradedConnection ? 6 : 0) * model.networkPenaltyScale;
 
-  const base = distanceFactor * 58 + approachFactor * 24 + speedFactor * 18;
+  const base =
+    distanceFactor * 58 * model.distanceWeight +
+    approachFactor * 24 * model.approachWeight +
+    speedFactor * 18 * model.speedWeight;
   return clamp(base + accuracyPenalty + networkPenalty, 0, 100);
 }
 
@@ -77,12 +137,14 @@ export function generateV2XAiInsights(
   snapshot: RealtimeSnapshot,
   nodes: AiRiskNodeInput[],
   signalDistanceMeters: number,
+  modelId: V2XModelId = "hybrid-fusion-ops",
 ): AiInsights {
+  const model = getModelProfile(modelId);
   const ev = snapshot.vehicles.emergency;
   const degradedConnection = ev.connectionStatus !== "connected";
 
   const perVehicle = nodes.reduce<Record<string, AiVehicleInsight>>((acc, node) => {
-    const score = scoreNode(node.distanceMeters, node.approaching, ev.speed, ev.accuracy, degradedConnection);
+    const score = scoreNode(node.distanceMeters, node.approaching, ev.speed, ev.accuracy, degradedConnection, model);
     const level = levelFromScore(score);
     acc[node.id] = {
       score,
@@ -97,11 +159,13 @@ export function generateV2XAiInsights(
 
   const vehicleInsights = Object.values(perVehicle);
   const maxVehicleScore = vehicleInsights.length > 0 ? Math.max(...vehicleInsights.map((entry) => entry.score)) : 0;
-  const signalFactor = clamp(1 - signalDistanceMeters / 140, 0, 1) * 20;
+  const signalFactor = clamp(1 - signalDistanceMeters / 140, 0, 1) * 20 * model.signalWeight;
   const overallScore = clamp(maxVehicleScore * 0.86 + signalFactor, 0, 100);
   const overallLevel = levelFromScore(overallScore);
 
   return {
+    modelId: model.id,
+    modelName: model.name,
     overall: {
       score: overallScore,
       level: overallLevel,
