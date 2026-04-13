@@ -54,7 +54,7 @@ const NODE_IMAGES: Record<string, string> = {
   vehicle1: "/vehicles/civilian-car.svg",
   vehicle2: "/vehicles/civilian-car.svg",
 };
-// Minimum combined coordinate-delta (in degrees) before appending a trail point.
+// Minimum combined coordinate-delta (in degrees), ~0.2-0.3m movement at this latitude, before appending a trail point.
 const MIN_TRAIL_DELTA_THRESHOLD = 0.000002;
 
 function FollowCenter({ center }: { center: [number, number] }) {

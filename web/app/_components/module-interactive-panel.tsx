@@ -48,6 +48,7 @@ const EV_DRIFT_AMPLITUDE = 0.00001;
 const MIN_GPS_ACCURACY_METERS = 2.5;
 const MAX_GPS_ACCURACY_METERS = 35;
 const DEFAULT_GPS_ACCURACY_METERS = 8;
+// Approx. 3.3m latitude movement per button tap (demo-scale repositioning).
 const VEHICLE_NUDGE_STEP = 0.00003;
 
 function drift(seed: number, scale: number): number {
@@ -103,6 +104,12 @@ function formatEta(seconds: number | null): string {
   if (seconds === null || !Number.isFinite(seconds)) return "n/a";
   if (seconds <= 0) return "<1s";
   return `${Math.round(seconds)}s`;
+}
+
+function alertLevelChipClass(level: "critical" | "warning" | "normal"): string {
+  if (level === "critical") return "border-red-500/50 text-red-300";
+  if (level === "warning") return "border-yellow-500/50 text-yellow-300";
+  return "border-emerald-500/50 text-emerald-300";
 }
 
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
@@ -594,7 +601,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className={`cyber-chip ${highestAlertLevel === "critical" ? "border-red-500/50 text-red-300" : highestAlertLevel === "warning" ? "border-yellow-500/50 text-yellow-300" : "border-emerald-500/50 text-emerald-300"}`}>
+            <span className={`cyber-chip ${alertLevelChipClass(highestAlertLevel)}`}>
               Alert {highestAlertLevel}
             </span>
             <span className="cyber-chip text-cyan-300">ETA {formatEta(evEtaToSignalSeconds)}</span>
