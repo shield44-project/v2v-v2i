@@ -1,7 +1,9 @@
 import { auth } from "@/auth";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { moduleDefinitions } from "@/app/modules";
+import { moduleVisualBySlug } from "@/app/module-visuals";
 import UserSessionPill from "@/app/_components/user-session-pill";
 
 export default async function DashboardPage() {
@@ -48,6 +50,13 @@ export default async function DashboardPage() {
             style={{ animationDelay: `${80 + i * 50}ms` }}
           >
             <h2 className="text-xl font-semibold text-zinc-100">{moduleItem.title}</h2>
+            <Image
+              src={moduleVisualBySlug[moduleItem.slug] ?? "/ai-orb.svg"}
+              alt={`${moduleItem.title} visual`}
+              width={640}
+              height={360}
+              className="mt-3 h-24 w-full rounded-lg border border-zinc-800 bg-black/40 object-cover"
+            />
             <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
               {moduleItem.badge}
             </p>

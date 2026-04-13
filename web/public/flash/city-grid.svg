@@ -1,0 +1,39 @@
+<svg width="960" height="540" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1023" />
+      <stop offset="55%" stop-color="#101535" />
+      <stop offset="100%" stop-color="#2a0e2f" />
+    </linearGradient>
+    <linearGradient id="beamA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.05" />
+    </linearGradient>
+    <linearGradient id="beamB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.08" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)" />
+  <circle cx="220" cy="160" r="170" fill="#22d3ee" fill-opacity="0.12" />
+  <circle cx="760" cy="420" r="220" fill="#f43f5e" fill-opacity="0.1" />
+  <g opacity="0.45" stroke="#67e8f9" stroke-width="1">
+    <path d="M0 420H960" />
+    <path d="M0 380H960" />
+    <path d="M0 340H960" />
+    <path d="M0 300H960" />
+    <path d="M0 260H960" />
+    <path d="M0 220H960" />
+  </g>
+  <g opacity="0.4" stroke="#67e8f9" stroke-width="1">
+    <path d="M120 210V540" />
+    <path d="M240 210V540" />
+    <path d="M360 210V540" />
+    <path d="M480 210V540" />
+    <path d="M600 210V540" />
+    <path d="M720 210V540" />
+    <path d="M840 210V540" />
+  </g>
+  <path d="M68 456L242 318L382 354L520 238L670 268L832 182" stroke="url(#beamA)" stroke-width="6" stroke-linecap="round" />
+  <path d="M90 492L260 388L412 430L556 330L702 366L872 292" stroke="url(#beamB)" stroke-width="6" stroke-linecap="round" />
+</svg>

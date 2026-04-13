@@ -21,7 +21,7 @@ type StreetLevelMap3DProps = {
   cameraFov: number;
 };
 
-const MAP_STYLE = "mapbox://styles/mapbox/streets-v12";
+const MAP_STYLE = "mapbox://styles/mapbox/satellite-v9";
 const SOURCE_ROUTE_MAIN = "ev-route-main";
 const SOURCE_ROUTE_ALT = "ev-route-alt";
 const SOURCE_COLLISION = "predicted-collision-zones";
@@ -244,6 +244,13 @@ export default function StreetLevelMap3D({
         });
       }
       map.setTerrain({ source: "mapbox-dem", exaggeration: 1.25 });
+      map.setFog({
+        color: "rgb(168, 209, 255)",
+        "horizon-blend": 0.3,
+        "high-color": "rgb(36, 92, 223)",
+        "space-color": "rgb(8, 10, 25)",
+        "star-intensity": 0.15,
+      });
 
       const scene = new THREE.Scene();
       const camera = new THREE.Camera();
@@ -456,7 +463,7 @@ export default function StreetLevelMap3D({
       <div className="map-container-animated relative h-[420px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.14),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(244,63,94,0.12),transparent_40%)]" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-          <p className="text-sm font-semibold text-zinc-100">3D Street-Level View (Fallback)</p>
+          <p className="text-sm font-semibold text-zinc-100">3D Satellite View (Fallback)</p>
           <p className="max-w-xl text-xs text-zinc-400">
             Mapbox token is missing. Running demo-safe fallback visuals with full 2D simulation support.
             Set <code className="rounded bg-black/60 px-1 py-0.5 text-cyan-300">NEXT_PUBLIC_MAPBOX_TOKEN</code> for full terrain/buildings.

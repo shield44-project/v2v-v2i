@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/auth";
 import { moduleDefinitions } from "@/app/modules";
+import { moduleVisualBySlug } from "@/app/module-visuals";
 import UserSessionPill from "@/app/_components/user-session-pill";
 
 const appNodes = moduleDefinitions;
@@ -69,6 +70,15 @@ export default async function Home() {
           <Image src="/ai-orb.svg" alt="" aria-hidden width={36} height={36} className="rounded-md border border-cyan-500/20" />
           <span>AI copilot is active on module pages for risk scoring and yield recommendations.</span>
         </div>
+        <div className="mt-6 overflow-hidden rounded-xl border border-cyan-500/25 bg-black/40">
+          <Image
+            src="/flash/city-grid.svg"
+            alt="Flashy city network placeholder visual"
+            width={960}
+            height={540}
+            className="h-36 w-full object-cover opacity-90 sm:h-44"
+          />
+        </div>
         <div className="mt-8 rounded-xl border border-zinc-800 bg-black p-4 text-sm text-zinc-300">
           <strong className="text-zinc-200">Status:</strong>{" "}
           {session?.user ? (
@@ -91,6 +101,13 @@ export default async function Home() {
             style={{ animationDelay: `${120 + i * 55}ms` }}
           >
             <h3 className="text-xl font-semibold text-zinc-100">{node.title}</h3>
+            <Image
+              src={moduleVisualBySlug[node.slug] ?? "/ai-orb.svg"}
+              alt={`${node.title} visual`}
+              width={640}
+              height={360}
+              className="mt-3 h-24 w-full rounded-lg border border-zinc-800 bg-black/40 object-cover"
+            />
             <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">{node.badge}</p>
             <p className="mt-3 text-zinc-300">{node.description}</p>
           </Link>

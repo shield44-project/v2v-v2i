@@ -1,0 +1,21 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="broadcastGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="50%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#f43f5e" />
+    </linearGradient>
+    <radialGradient id="broadcastCore" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#fef2f2" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0.15" />
+    </radialGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="64" fill="#080d1a" />
+  <circle cx="128" cy="128" r="112" stroke="url(#broadcastGlow)" stroke-opacity="0.32" stroke-width="2" />
+  <circle cx="128" cy="128" r="30" fill="url(#broadcastCore)" />
+  <circle cx="128" cy="128" r="14" fill="#f43f5e" />
+  <path d="M89 89C110 68 146 68 167 89" stroke="#22d3ee" stroke-width="10" stroke-linecap="round" />
+  <path d="M71 71C102 40 154 40 185 71" stroke="#67e8f9" stroke-opacity="0.85" stroke-width="10" stroke-linecap="round" />
+  <path d="M89 167C110 188 146 188 167 167" stroke="#22d3ee" stroke-width="10" stroke-linecap="round" />
+  <path d="M71 185C102 216 154 216 185 185" stroke="#67e8f9" stroke-opacity="0.85" stroke-width="10" stroke-linecap="round" />
+</svg>

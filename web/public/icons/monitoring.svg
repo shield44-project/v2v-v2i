@@ -1,0 +1,19 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="monitorRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <linearGradient id="monitorBeam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="64" fill="#070b18" />
+  <circle cx="128" cy="128" r="98" stroke="url(#monitorRing)" stroke-opacity="0.25" stroke-width="2" />
+  <circle cx="128" cy="128" r="74" stroke="url(#monitorRing)" stroke-opacity="0.5" stroke-width="3" />
+  <circle cx="128" cy="128" r="50" stroke="url(#monitorRing)" stroke-opacity="0.75" stroke-width="4" />
+  <circle cx="128" cy="128" r="8" fill="#67e8f9" />
+  <path d="M128 128L198 92" stroke="url(#monitorBeam)" stroke-width="12" stroke-linecap="round" />
+  <path d="M58 168C74 151 87 145 103 144C119 143 131 147 146 155C160 162 173 164 198 154" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" />
+</svg>
