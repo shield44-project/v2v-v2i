@@ -1,12 +1,14 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 
 type ChatbotMessage = {
   id: string;
   role: "assistant" | "user";
   text: string;
 };
+const MAX_CHAT_MESSAGES = 6;
+const MESSAGES_PER_SUBMISSION = 2;
 
 function buildResponse(prompt: string) {
   const text = prompt.toLowerCase();
@@ -24,6 +26,10 @@ function buildResponse(prompt: string) {
   return "I can help with route clearance, dashboard navigation, and V2X safety guidance. Ask me what you want to do.";
 }
 
+function createMessageId(prefix: string) {
+  return `${prefix}-${crypto.randomUUID()}`;
+}
+
 export default function HomeAiChatbot() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatbotMessage[]>([
@@ -35,10 +41,7 @@ export default function HomeAiChatbot() {
   ]);
 
   const canSend = input.trim().length > 0;
-  const placeholder = useMemo(
-    () => "Ask: how do I clear an emergency route?",
-    [],
-  );
+  const placeholder = "Ask: how do I clear an emergency route?";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,9 +49,9 @@ export default function HomeAiChatbot() {
     if (!trimmed) return;
 
     setMessages((existing) => [
-      ...existing.slice(-5),
-      { id: `user-${Date.now()}`, role: "user", text: trimmed },
-      { id: `assistant-${Date.now() + 1}`, role: "assistant", text: buildResponse(trimmed) },
+      ...existing.slice(-(MAX_CHAT_MESSAGES - MESSAGES_PER_SUBMISSION)),
+      { id: createMessageId("user"), role: "user", text: trimmed },
+      { id: createMessageId("assistant"), role: "assistant", text: buildResponse(trimmed) },
     ]);
     setInput("");
   }

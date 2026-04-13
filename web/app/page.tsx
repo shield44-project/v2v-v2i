@@ -101,11 +101,11 @@ export default async function Home() {
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">Response Flow</p>
+              <p className="text-xs uppercase tracking-[0.12em] text-cyan-300">Response Flow</p>
               <p className="mt-1 text-sm text-zinc-200">Emergency + Signal modules coordinate priority routing.</p>
             </div>
             <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">Secure Access</p>
+              <p className="text-xs uppercase tracking-[0.12em] text-cyan-300">Secure Access</p>
               <p className="mt-1 text-sm text-zinc-200">Google authenticated dashboard with session visibility.</p>
             </div>
           </div>
