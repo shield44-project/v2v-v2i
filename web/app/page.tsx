@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { moduleDefinitions } from "@/app/modules";
 import { moduleVisualBySlug } from "@/app/module-visuals";
 import UserSessionPill from "@/app/_components/user-session-pill";
+import HomeAiChatbot from "@/app/_components/home-ai-chatbot";
 
 const appNodes = moduleDefinitions;
 
@@ -89,6 +90,27 @@ export default async function Home() {
             <span className="text-zinc-400">Not signed in</span>
           )}
         </div>
+      </section>
+
+      <section className="mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="card-glow animate-fade-in-up rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+          <h3 className="text-lg font-semibold text-zinc-100">Why teams use V2X Connect</h3>
+          <p className="mt-2 text-sm text-zinc-300">
+            Unified real-time modules, clear operational status, and AI guidance in a single
+            user-friendly workspace.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">Response Flow</p>
+              <p className="mt-1 text-sm text-zinc-200">Emergency + Signal modules coordinate priority routing.</p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">Secure Access</p>
+              <p className="mt-1 text-sm text-zinc-200">Google authenticated dashboard with session visibility.</p>
+            </div>
+          </div>
+        </article>
+        <HomeAiChatbot />
       </section>
 
       {/* module grid */}
