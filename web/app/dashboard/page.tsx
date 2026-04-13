@@ -1,8 +1,20 @@
 import { auth } from "@/auth";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { moduleDefinitions } from "@/app/modules";
 import UserSessionPill from "@/app/_components/user-session-pill";
+
+const moduleVisualBySlug: Record<string, string> = {
+  control: "/flash/city-grid.svg",
+  emergency: "/icons/broadcasting.svg",
+  signal: "/icons/monitoring.svg",
+  vehicle1: "/vehicles/civilian-car.svg",
+  vehicle2: "/vehicles/civilian-car.svg",
+  admin: "/flash/city-grid.svg",
+  "admin-preview": "/flash/city-grid.svg",
+  "user-portal": "/ai-orb.svg",
+};
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -48,6 +60,13 @@ export default async function DashboardPage() {
             style={{ animationDelay: `${80 + i * 50}ms` }}
           >
             <h2 className="text-xl font-semibold text-zinc-100">{moduleItem.title}</h2>
+            <Image
+              src={moduleVisualBySlug[moduleItem.slug] ?? "/ai-orb.svg"}
+              alt={`${moduleItem.title} visual`}
+              width={640}
+              height={360}
+              className="mt-3 h-24 w-full rounded-lg border border-zinc-800 bg-black/40 object-cover"
+            />
             <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
               {moduleItem.badge}
             </p>

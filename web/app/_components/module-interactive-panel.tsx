@@ -791,6 +791,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               {connectionStatus === "connected" ? "● Connected" : "● Fallback mode"}
             </p>
           </div>
+          <div className="hidden items-center gap-2 rounded-full border border-cyan-500/35 bg-cyan-500/10 px-3 py-1 sm:inline-flex">
+            <Image src="/icons/monitoring.svg" alt="Monitoring icon" width={20} height={20} />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">Live Monitoring</span>
+          </div>
           {(role === "emergency" || role === "vehicle1" || role === "vehicle2") && (
             <button
               type="button"
@@ -895,7 +899,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         </article>
 
         <article className="glass-panel layered-card rounded-xl p-4 xl:col-span-1">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-400">Radar Detection</p>
+          <div className="flex items-center gap-2">
+            <Image src="/icons/monitoring.svg" alt="Monitoring radar icon" width={30} height={30} className="h-8 w-8" />
+            <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-300">Radar Monitoring</p>
+          </div>
           <div className="mt-3 radar-widget">
             {radarTargets.map((target) => (
               <span
@@ -989,13 +996,24 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 type="button"
                 onClick={toggleBroadcast}
                 aria-label="Toggle emergency broadcast"
-                className={`h-24 w-24 rounded-full border text-xs font-semibold tracking-wide transition ${
+                className={`group h-36 w-36 rounded-full border p-3 text-center text-xs font-semibold tracking-wide transition ${
                   snapshot.emergency.active
-                    ? "ev-active-glow border-red-500 bg-red-500/20 text-red-200"
-                    : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
+                    ? "ev-active-glow border-red-400 bg-gradient-to-br from-red-500/35 via-fuchsia-500/20 to-cyan-500/20 text-red-100"
+                    : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-cyan-500/50"
                 }`}
               >
-                {snapshot.emergency.active ? "BROADCAST ON" : "BROADCAST OFF"}
+                <span className="flex h-full flex-col items-center justify-center gap-1">
+                  <Image
+                    src="/icons/broadcasting.svg"
+                    alt="Broadcasting icon"
+                    width={72}
+                    height={72}
+                    className={`h-16 w-16 transition duration-300 ${snapshot.emergency.active ? "scale-110" : "group-hover:scale-105"}`}
+                  />
+                  <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-100/90">
+                    {snapshot.emergency.active ? "Broadcast ON" : "Broadcast OFF"}
+                  </span>
+                </span>
               </button>
               <button type="button" className="btn-secondary" onClick={toggleKalman}>
                 Kalman {snapshot.emergency.kalmanEnabled ? "ON" : "OFF"}
