@@ -5,6 +5,7 @@ import type { RealtimeSnapshot, TelemetryNode, V2XLog, SignalState, EmergencySta
 
 const CHANNEL_KEY = "v2x-realtime-channel";
 const MAX_LOGS = 150;
+const VERCEL_SYNC_DEBOUNCE_MS = 700;
 
 type SnapshotListener = (snapshot: RealtimeSnapshot) => void;
 
@@ -95,6 +96,8 @@ let eventSource: EventSource | null = null;
 const listeners = new Set<SnapshotListener>();
 let initialized = false;
 let logSequence = 0;
+let pendingVercelSync: RealtimeSnapshot | null = null;
+let vercelSyncTimer: number | null = null;
 
 async function syncToVercel(snapshot: RealtimeSnapshot): Promise<void> {
   if (typeof window === "undefined") return;
@@ -111,6 +114,22 @@ async function syncToVercel(snapshot: RealtimeSnapshot): Promise<void> {
   } catch {
     // Ignore network sync failures and keep local/broadcast listeners active.
   }
+}
+
+function queueVercelSync(snapshot: RealtimeSnapshot): void {
+  if (typeof window === "undefined") return;
+  if (!process.env.NEXT_PUBLIC_VERCEL_SYNC_ENDPOINT) return;
+
+  pendingVercelSync = snapshot;
+  if (vercelSyncTimer) return;
+
+  vercelSyncTimer = window.setTimeout(() => {
+    vercelSyncTimer = null;
+    const nextPayload = pendingVercelSync;
+    pendingVercelSync = null;
+    if (!nextPayload) return;
+    void syncToVercel(nextPayload);
+  }, VERCEL_SYNC_DEBOUNCE_MS);
 }
 
 function safeParseSnapshot(value: string): RealtimeSnapshot | null {
@@ -153,7 +172,7 @@ function publish(nextSnapshot: RealtimeSnapshot, source: "local" | "broadcast" |
   }
 
   if (source === "local") {
-    void syncToVercel(state);
+    queueVercelSync(state);
   }
 }
 
