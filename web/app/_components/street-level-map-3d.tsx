@@ -62,9 +62,18 @@ export default function StreetLevelMap3D({
   const markersRef = useRef<Record<string, mapboxgl.Marker>>({});
   const animationFrameRef = useRef<number | null>(null);
   const threeCleanupRef = useRef<(() => void) | null>(null);
+  const emergency = snapshot.vehicles.emergency;
+  const emergencyRef = useRef(emergency);
+  const cameraHeightRef = useRef(cameraHeight);
+  const initialViewRef = useRef({
+    longitude: emergency.kalmanLongitude,
+    latitude: emergency.kalmanLatitude,
+    bearing: emergency.heading,
+  });
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim() ?? "";
   const hasToken = Boolean(token);
-  const emergency = snapshot.vehicles.emergency;
+  emergencyRef.current = emergency;
+  cameraHeightRef.current = cameraHeight;
 
   const nodeFeatures = useMemo(
     () =>
@@ -89,10 +98,10 @@ export default function StreetLevelMap3D({
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: [emergency.kalmanLongitude, emergency.kalmanLatitude],
+      center: [initialViewRef.current.longitude, initialViewRef.current.latitude],
       zoom: 16.5,
       pitch: 58,
-      bearing: emergency.heading,
+      bearing: initialViewRef.current.bearing,
       antialias: true,
     });
     mapRef.current = map;
@@ -100,7 +109,7 @@ export default function StreetLevelMap3D({
 
     map.on("style.load", () => {
       if (!map.getSource(SOURCE_ROUTE_MAIN)) {
-        map.addSource(SOURCE_ROUTE_MAIN, { type: "geojson", data: makeLine(route) as GeoJSON.Feature });
+        map.addSource(SOURCE_ROUTE_MAIN, { type: "geojson", data: makeLine([]) as GeoJSON.Feature });
       }
       if (!map.getLayer("ev-route-main-line")) {
         map.addLayer({
@@ -118,13 +127,10 @@ export default function StreetLevelMap3D({
       if (!map.getSource(SOURCE_ROUTE_ALT)) {
         map.addSource(SOURCE_ROUTE_ALT, {
           type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: alternateRoutes.map((points, index) => ({
-              ...makeLine(points),
-              properties: { altIndex: index },
-            })),
-          } as GeoJSON.FeatureCollection,
+            data: {
+              type: "FeatureCollection",
+              features: [],
+            } as GeoJSON.FeatureCollection,
         });
       }
       if (!map.getLayer("ev-route-alt-line")) {
@@ -133,14 +139,9 @@ export default function StreetLevelMap3D({
           type: "line",
           source: SOURCE_ROUTE_ALT,
           paint: {
-            "line-color": [
-              "case",
-              ["==", ["get", "altIndex"], chosenAlternative],
-              "#22d3ee",
-              "#71717a",
-            ],
-            "line-width": ["case", ["==", ["get", "altIndex"], chosenAlternative], 3, 2],
-            "line-dasharray": ["case", ["==", ["get", "altIndex"], chosenAlternative], ["literal", [1, 0]], ["literal", [2, 2]]],
+            "line-color": "#71717a",
+            "line-width": 2,
+            "line-dasharray": [2, 2],
             "line-opacity": 0.7,
           },
         });
@@ -170,7 +171,7 @@ export default function StreetLevelMap3D({
       if (!map.getSource(SOURCE_NODES)) {
         map.addSource(SOURCE_NODES, {
           type: "geojson",
-          data: { type: "FeatureCollection", features: nodeFeatures },
+          data: { type: "FeatureCollection", features: [] },
         });
       }
 
@@ -237,17 +238,6 @@ export default function StreetLevelMap3D({
       scene.add(emergencyMesh);
       scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-      const modelAsMercator = mapboxgl.MercatorCoordinate.fromLngLat(
-        [emergency.kalmanLongitude, emergency.kalmanLatitude],
-        0,
-      );
-      const modelTransform = {
-        translateX: modelAsMercator.x,
-        translateY: modelAsMercator.y,
-        translateZ: modelAsMercator.z,
-        scale: modelAsMercator.meterInMercatorCoordinateUnits(),
-      };
-
       const customLayer: mapboxgl.CustomLayerInterface = {
         id: "three-emergency-layer",
         type: "custom",
@@ -261,15 +251,26 @@ export default function StreetLevelMap3D({
           renderer.autoClear = false;
         },
         render: (_gl, matrix) => {
+          const emergencyPosition = emergencyRef.current;
+          const modelAsMercator = mapboxgl.MercatorCoordinate.fromLngLat(
+            [emergencyPosition.kalmanLongitude, emergencyPosition.kalmanLatitude],
+            0,
+          );
           const rotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
           const m = new THREE.Matrix4().fromArray(matrix as number[]);
           const l = new THREE.Matrix4()
             .makeTranslation(
-              modelTransform.translateX,
-              modelTransform.translateY,
-              modelTransform.translateZ + MERCATOR_HEIGHT_SCALE * cameraHeight,
+              modelAsMercator.x,
+              modelAsMercator.y,
+              modelAsMercator.z + MERCATOR_HEIGHT_SCALE * cameraHeightRef.current,
             )
-            .scale(new THREE.Vector3(modelTransform.scale, -modelTransform.scale, modelTransform.scale))
+            .scale(
+              new THREE.Vector3(
+                modelAsMercator.meterInMercatorCoordinateUnits(),
+                -modelAsMercator.meterInMercatorCoordinateUnits(),
+                modelAsMercator.meterInMercatorCoordinateUnits(),
+              ),
+            )
             .multiply(rotation);
           camera.projectionMatrix = m.multiply(l);
           emergencyMesh.rotation.z += EMERGENCY_MESH_ROTATION_SPEED;
@@ -305,7 +306,7 @@ export default function StreetLevelMap3D({
       map.remove();
       mapRef.current = null;
     };
-  }, [cameraHeight, emergency.heading, emergency.kalmanLatitude, emergency.kalmanLongitude, hasToken, nodeFeatures, route, token, chosenAlternative, alternateRoutes]);
+  }, [hasToken, token]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -322,6 +323,26 @@ export default function StreetLevelMap3D({
         properties: { altIndex: index },
       })),
     } as GeoJSON.FeatureCollection);
+    if (map.getLayer("ev-route-alt-line")) {
+      map.setPaintProperty("ev-route-alt-line", "line-color", [
+        "case",
+        ["==", ["get", "altIndex"], chosenAlternative],
+        "#22d3ee",
+        "#71717a",
+      ]);
+      map.setPaintProperty("ev-route-alt-line", "line-width", [
+        "case",
+        ["==", ["get", "altIndex"], chosenAlternative],
+        3,
+        2,
+      ]);
+      map.setPaintProperty("ev-route-alt-line", "line-dasharray", [
+        "case",
+        ["==", ["get", "altIndex"], chosenAlternative],
+        ["literal", [1, 0]],
+        ["literal", [2, 2]],
+      ]);
+    }
 
     const collisionSource = map.getSource(SOURCE_COLLISION) as mapboxgl.GeoJSONSource | undefined;
     collisionSource?.setData({
