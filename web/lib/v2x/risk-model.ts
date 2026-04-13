@@ -43,11 +43,12 @@ function recommendationFromLevel(level: AiRiskLevel, approaching: boolean): stri
 }
 
 function reasonsForNode(distanceMeters: number, approaching: boolean, accuracyMeters: number): string[] {
-  const reasons: string[] = [];
-  reasons.push(`Distance ${distanceMeters.toFixed(1)}m`);
-  reasons.push(approaching ? "EV approach vector confirmed" : "EV moving away or lateral");
-  reasons.push(`GPS uncertainty ±${accuracyMeters.toFixed(1)}m`);
-  return reasons;
+  // These strings are shown in the UI as explainability hints for each AI recommendation.
+  return [
+    `Distance ${distanceMeters.toFixed(1)}m`,
+    approaching ? "EV approach vector confirmed" : "EV moving away or lateral",
+    `GPS uncertainty ±${accuracyMeters.toFixed(1)}m`,
+  ];
 }
 
 function scoreNode(
@@ -116,7 +117,7 @@ export function generateV2XAiInsights(
               : "Normal operations with AI watch mode.",
       reasons: [
         `Signal distance ${signalDistanceMeters.toFixed(1)}m`,
-        `Fastest EV speed ${ev.speed.toFixed(1)}m/s`,
+        `Current EV speed ${ev.speed.toFixed(1)}m/s`,
         degradedConnection ? "Network degraded fallback active" : "Network link healthy",
       ],
     },

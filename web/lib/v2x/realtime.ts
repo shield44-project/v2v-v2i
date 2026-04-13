@@ -97,7 +97,7 @@ const listeners = new Set<SnapshotListener>();
 let initialized = false;
 let logSequence = 0;
 let pendingVercelSync: RealtimeSnapshot | null = null;
-let vercelSyncTimer: number | null = null;
+let vercelSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function syncToVercel(snapshot: RealtimeSnapshot): Promise<void> {
   if (typeof window === "undefined") return;
@@ -121,9 +121,11 @@ function queueVercelSync(snapshot: RealtimeSnapshot): void {
   if (!process.env.NEXT_PUBLIC_VERCEL_SYNC_ENDPOINT) return;
 
   pendingVercelSync = snapshot;
-  if (vercelSyncTimer) return;
+  if (vercelSyncTimer) {
+    clearTimeout(vercelSyncTimer);
+  }
 
-  vercelSyncTimer = window.setTimeout(() => {
+  vercelSyncTimer = setTimeout(() => {
     vercelSyncTimer = null;
     const nextPayload = pendingVercelSync;
     pendingVercelSync = null;

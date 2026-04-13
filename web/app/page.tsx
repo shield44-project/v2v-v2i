@@ -67,6 +67,10 @@ export default async function Home() {
             />
           </div>
         </div>
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs text-cyan-100 lg:hidden">
+          <Image src="/ai-orb.svg" alt="" aria-hidden width={36} height={36} className="rounded-md border border-cyan-500/20" />
+          <span>AI copilot is active on module pages for risk scoring and yield recommendations.</span>
+        </div>
         <div className="mt-8 rounded-xl border border-zinc-800 bg-black p-4 text-sm text-zinc-300">
           <strong className="text-zinc-200">Status:</strong>{" "}
           {session?.user ? (

@@ -19,7 +19,7 @@ import {
   predictFuturePosition,
   vincentyDistanceMeters,
 } from "@/lib/v2x/geodesy";
-import { generateV2XAiInsights } from "@/lib/v2x/risk-model";
+import { generateV2XAiInsights, type AiRiskLevel } from "@/lib/v2x/risk-model";
 import type { NodeRole, RealtimeSnapshot, SignalDirection, VehicleType } from "@/lib/v2x/types";
 import type { MapMode } from "@/app/_components/live-map";
 
@@ -91,6 +91,10 @@ function triggerVibration(): void {
 
 function compactTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour12: false });
+}
+
+function formatRiskLabel(score: number, level: AiRiskLevel): string {
+  return `${score.toFixed(0)}/100 · ${level.toUpperCase()}`;
 }
 
 export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
@@ -711,17 +715,19 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           {/* Safety status */}
           {civilianMetrics
             .filter((m) => m.id === role)
-            .map((metric) => (
-              <article
-                key={metric.id}
-                className={`animate-slide-in-right rounded-xl border p-4 transition ${
-                  metric.alert25
-                    ? "warning-card animate-warning-pulse"
-                    : metric.alert50
-                      ? "border-yellow-500/40 bg-yellow-500/5"
-                      : "border-zinc-800 bg-zinc-950"
-                }`}
-              >
+            .map((metric) => {
+              const vehicleInsight = aiInsights.perVehicle[metric.id];
+              return (
+                <article
+                  key={metric.id}
+                  className={`animate-slide-in-right rounded-xl border p-4 transition ${
+                    metric.alert25
+                      ? "warning-card animate-warning-pulse"
+                      : metric.alert50
+                        ? "border-yellow-500/40 bg-yellow-500/5"
+                        : "border-zinc-800 bg-zinc-950"
+                  }`}
+                >
                 <h3 className="font-semibold text-zinc-100">Civilian Vehicle (V2V)</h3>
 
                 {/* Yield direction indicator */}
@@ -792,18 +798,18 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                 <p className="mt-3 text-xs text-zinc-600">
                   🔊 Siren triggers at 50 m · 📳 Vibration at 25 m · Only when EV is approaching.
                 </p>
-                {aiInsights.perVehicle[metric.id] && (
+                {vehicleInsight && (
                   <div className="ai-card mt-3 rounded-lg border border-cyan-500/20 p-3 text-sm">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300">AI Yield Assistant</p>
                     <p className="mt-1 text-zinc-200">
-                      Score {aiInsights.perVehicle[metric.id].score.toFixed(0)}/100 ·{" "}
-                      {aiInsights.perVehicle[metric.id].level.toUpperCase()}
+                      Score {formatRiskLabel(vehicleInsight.score, vehicleInsight.level)}
                     </p>
-                    <p className="mt-1 text-zinc-400">{aiInsights.perVehicle[metric.id].recommendation}</p>
+                    <p className="mt-1 text-zinc-400">{vehicleInsight.recommendation}</p>
                   </div>
                 )}
-              </article>
-            ))}
+                </article>
+              );
+            })}
         </div>
       )}
 
@@ -866,11 +872,12 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {civilianMetrics.map((metric) => {
                 const insight = aiInsights.perVehicle[metric.id];
+                if (!insight) return null;
                 return (
                   <div key={`ai-${metric.id}`} className="rounded-md border border-zinc-800 bg-black/30 p-2 text-xs text-zinc-300">
                     <p className="font-medium text-zinc-200">{metric.label}</p>
-                    <p className="mt-0.5">Risk {insight?.score.toFixed(0) ?? "0"}/100 · {insight?.level.toUpperCase() ?? "LOW"}</p>
-                    <p className="mt-0.5 text-zinc-500">{insight?.recommendation ?? "No active recommendation."}</p>
+                    <p className="mt-0.5">Risk {formatRiskLabel(insight.score, insight.level)}</p>
+                    <p className="mt-0.5 text-zinc-500">{insight.recommendation}</p>
                   </div>
                 );
               })}
