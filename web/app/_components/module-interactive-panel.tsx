@@ -978,7 +978,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
           </article>
 
           <article className="glass-panel layered-card rounded-xl p-4">
-            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning (Vehicle 1 / Vehicle 2)</h3>
+            <h3 className="font-semibold text-zinc-100 mb-3">Vehicle Motion Tuning</h3>
             <div className="grid gap-3 lg:grid-cols-2">
               {(["vehicle1", "vehicle2"] as const).map((nodeId) => {
                 const node = snapshot.vehicles[nodeId];
@@ -991,10 +991,10 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                       </span>
                     </div>
                     <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
-                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, VEHICLE_NUDGE_STEP, 0)}>N +</button>
-                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, -VEHICLE_NUDGE_STEP, 0)}>S -</button>
-                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, VEHICLE_NUDGE_STEP)}>E +</button>
-                      <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, -VEHICLE_NUDGE_STEP)}>W -</button>
+                      <button type="button" aria-label={`Nudge ${node.label} north`} className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, VEHICLE_NUDGE_STEP, 0)}>N +</button>
+                      <button type="button" aria-label={`Nudge ${node.label} south`} className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, -VEHICLE_NUDGE_STEP, 0)}>S -</button>
+                      <button type="button" aria-label={`Nudge ${node.label} east`} className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, VEHICLE_NUDGE_STEP)}>E +</button>
+                      <button type="button" aria-label={`Nudge ${node.label} west`} className="btn-secondary !py-1 !text-xs" onClick={() => nudgeVehicle(nodeId, 0, -VEHICLE_NUDGE_STEP)}>W -</button>
                     </div>
                     <div className="mt-3 space-y-2">
                       <label className="block text-xs text-zinc-400">

@@ -54,6 +54,7 @@ const NODE_IMAGES: Record<string, string> = {
   vehicle1: "/vehicles/civilian-car.svg",
   vehicle2: "/vehicles/civilian-car.svg",
 };
+// Minimum combined lat/lon delta required before appending a point to node trails.
 const MIN_TRAIL_MOVEMENT_THRESHOLD = 0.000002;
 
 function FollowCenter({ center }: { center: [number, number] }) {
