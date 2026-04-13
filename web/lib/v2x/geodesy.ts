@@ -182,3 +182,46 @@ export function predictFuturePosition(
     longitude: toDegrees(lambda2),
   };
 }
+
+/**
+ * Returns true when the emergency vehicle (at evLat/evLon heading evHeading°)
+ * is moving *toward* the civilian (at civLat/civLon).
+ *
+ * Uses dot-product of the EV heading unit-vector against the relative-position
+ * vector from EV → civilian.  Works for small distances (< 5 km).
+ */
+export function isEvApproaching(
+  evLat: number,
+  evLon: number,
+  evHeadingDegrees: number,
+  civLat: number,
+  civLon: number,
+): boolean {
+  const headingRad = toRadians(normalizeHeading(evHeadingDegrees));
+  const evDirX = Math.sin(headingRad); // east component
+  const evDirY = Math.cos(headingRad); // north component
+  const relX = civLon - evLon;
+  const relY = civLat - evLat;
+  return evDirX * relX + evDirY * relY > 0;
+}
+
+/**
+ * Returns a yield action string and arrow for the civilian vehicle to display.
+ * civHeading is the civilian's current compass heading.
+ * bearingToEV is the compass bearing FROM civilian TO the emergency vehicle.
+ */
+export function getYieldAction(
+  civHeading: number,
+  bearingToEV: number,
+): { action: string; arrow: string } {
+  const relative = ((bearingToEV - civHeading) % 360 + 540) % 360 - 180; // –180..180
+  if (Math.abs(relative) < 60) {
+    return { action: "Stop / Pull Over", arrow: "🛑" };
+  }
+  if (relative > 0) {
+    // EV is to the right of civilian's heading → civilian moves left
+    return { action: "Move Left", arrow: "⬅️" };
+  }
+  // EV is to the left of civilian's heading → civilian moves right
+  return { action: "Move Right", arrow: "➡️" };
+}

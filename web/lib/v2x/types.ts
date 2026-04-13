@@ -57,6 +57,15 @@ export type RealtimeSnapshot = {
   updatedAt: string;
 };
 
+/** A user record managed by the admin console (persisted in localStorage). */
+export type UserRecord = {
+  email: string;
+  name?: string;
+  role: "admin" | "operator" | "viewer";
+  status: "active" | "banned";
+  addedAt: string;
+};
+
 /** Canonical Vercel storage paths for backend listeners and sync handlers. */
 export const VERCEL_SCHEMA_PATHS = {
   vehicles: "/vehicles/{id}",

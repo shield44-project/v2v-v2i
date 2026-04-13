@@ -268,3 +268,161 @@ body::before {
   background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.07) 0%, transparent 70%);
   pointer-events: none;
 }
+
+/* ─── extra keyframes ────────────────────────────────────── */
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);    }
+  50%       { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.22); }
+}
+
+@keyframes criticalFlash {
+  0%, 100% { background-color: transparent; }
+  50%       { background-color: rgba(239, 68, 68, 0.1); }
+}
+
+@keyframes countUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes evGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(255, 34, 51, 0.2),
+                0 0 18px rgba(255, 34, 51, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 34, 51, 0.35),
+                0 0 32px rgba(255, 34, 51, 0.25);
+  }
+}
+
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ─── animation utilities ────────────────────────────────── */
+
+.animate-slide-in-right {
+  animation: slideInRight 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-warning-pulse {
+  animation: warningPulse 1.1s ease-in-out infinite;
+}
+
+.animate-critical-flash {
+  animation: criticalFlash 0.55s ease-in-out infinite;
+}
+
+.animate-count-up {
+  animation: countUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-ping-slow {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-radar {
+  animation: radarSweep 3s linear infinite;
+}
+
+/* ─── warning & critical card states ─────────────────────── */
+
+.warning-card {
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.12), inset 0 0 28px rgba(239, 68, 68, 0.04);
+}
+
+.safe-card {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.05);
+}
+
+/* ─── EV active glow ─────────────────────────────────────── */
+
+.ev-active-glow {
+  animation: evGlow 1.6s ease-in-out infinite;
+}
+
+/* ─── simulation badge ───────────────────────────────────── */
+
+.sim-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.08);
+  color: #fde047;
+}
+
+/* ─── low network badge ──────────────────────────────────── */
+
+.low-net-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(251, 146, 60, 0.5);
+  background: rgba(251, 146, 60, 0.08);
+  color: #fb923c;
+}
+
+/* ─── metric card ────────────────────────────────────────── */
+
+.metric-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(63, 63, 70, 0.8);
+  background: #09090b;
+  transition: all 0.28s ease;
+}
+
+.metric-card:hover {
+  border-color: rgba(0, 229, 255, 0.22);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+/* ─── map container entry animation ─────────────────────── */
+
+.map-container-animated {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 80ms;
+}
+
+/* ─── interactive input focus ring ──────────────────────── */
+
+input:focus, select:focus {
+  outline: none;
+}
