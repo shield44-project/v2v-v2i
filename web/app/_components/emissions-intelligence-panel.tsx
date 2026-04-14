@@ -1,6 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+const CityWorld3D = dynamic(() => import("@/app/_components/city-world-3d"), { ssr: false });
 
 type GasKey = "co2" | "co" | "nox" | "so2" | "pm25" | "pm10" | "hc" | "vocs" | "ch4" | "ozone";
 type Scenario = "urban-peak" | "free-flow" | "incident";
@@ -379,26 +382,36 @@ export default function EmissionsIntelligencePanel() {
         </div>
       </div>
 
+      {/* ── 3D open-world simulation ──────────────────────────────────────── */}
+      <article className="mb-4">
+        <p className="mb-2 text-xs uppercase tracking-[0.12em]">🌍 3D Open-World City Simulation (real-time · WebGL)</p>
+        <CityWorld3D scenario={scenario} heightClass="h-[520px]" />
+        <p className={`mt-2 text-xs ${mutedText}`}>
+          Vehicles drive in real time. Toggle AI optimisation to see emission particles (exhaust smoke) increase or
+          decrease on each vehicle type. Drag to orbit · scroll to zoom.
+        </p>
+      </article>
+
       <div className="mb-4 grid gap-3 lg:grid-cols-4">
-        <label className="text-xs">
+        <label htmlFor="sel-scenario" className="text-xs">
           <span className={`${mutedText}`}>Traffic condition</span>
-          <select className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)}>
+          <select id="sel-scenario" className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)}>
             <option value="urban-peak">Urban peak</option>
             <option value="free-flow">Free flow</option>
             <option value="incident">Incident congestion</option>
           </select>
         </label>
-        <label className="text-xs">
+        <label htmlFor="sel-gas" className="text-xs">
           <span className={`${mutedText}`}>Gas filter</span>
-          <select className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={selectedGas} onChange={(event) => setSelectedGas(event.target.value as GasKey)}>
+          <select id="sel-gas" className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={selectedGas} onChange={(event) => setSelectedGas(event.target.value as GasKey)}>
             {GAS_DETAILS.map((gas) => (
               <option key={gas.key} value={gas.key}>{gas.label}</option>
             ))}
           </select>
         </label>
-        <label className="text-xs">
+        <label htmlFor="sel-vehicle" className="text-xs">
           <span className={`${mutedText}`}>Vehicle filter</span>
-          <select className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={selectedVehicle} onChange={(event) => setSelectedVehicle(event.target.value)}>
+          <select id="sel-vehicle" className={`mt-1 w-full rounded-md border px-2 py-1 ${secondaryClass}`} value={selectedVehicle} onChange={(event) => setSelectedVehicle(event.target.value)}>
             <option value="all">All vehicles</option>
             {VEHICLE_PROFILES.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>{vehicle.label}</option>
@@ -448,7 +461,7 @@ export default function EmissionsIntelligencePanel() {
       <article className={`mb-4 rounded-xl border p-3 ${secondaryClass}`}>
         <p className="text-xs uppercase tracking-[0.12em]">🚗 Vehicle-wise emissions + independent AI</p>
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filteredVehicles.map((vehicle, index) => (
+          {filteredVehicles.map((vehicle) => (
             <div key={vehicle.id} className={`rounded-lg border p-3 ${secondaryClass}`}>
               <div className="flex items-center justify-between">
                 <p className="font-semibold">{vehicle.icon} {vehicle.label}</p>
@@ -460,15 +473,6 @@ export default function EmissionsIntelligencePanel() {
               </div>
               <p className="mt-2 text-xs">Before {vehicle.beforeTotal.toFixed(1)} → After {vehicle.afterTotal.toFixed(1)} mg/min</p>
               <p className="text-xs">{selectedGas.toUpperCase()}: {vehicle.beforeByGas[selectedGas].toFixed(2)} → {vehicle.afterByGas[selectedGas].toFixed(2)}</p>
-              <div className="relative mt-2 h-8 overflow-hidden rounded bg-black/30">
-                <span
-                  className="absolute top-1 text-lg motion-safe:animate-[ping_2.8s_linear_infinite]"
-                  style={{ left: `${(index * 14) % 80}%` }}
-                >
-                  {vehicle.icon}
-                </span>
-                <span className="absolute right-1 top-1 text-[10px] text-zinc-400">3D lane sim</span>
-              </div>
             </div>
           ))}
         </div>
@@ -561,7 +565,7 @@ export default function EmissionsIntelligencePanel() {
             })}
           </div>
           <div className="space-y-1 text-xs">
-            <p>⚠️ Alert threshold: AQI &gt; {AQI_ALERT_THRESHOLD}</p>
+            <p>⚠️ Alert threshold: AQI {">"} {AQI_ALERT_THRESHOLD}</p>
             <p>{latest.aqi > AQI_ALERT_THRESHOLD ? "Danger zone alerts active" : "Air quality within managed range"}</p>
             <p>Map integration mode: simulated IoT + V2X feed</p>
             <p>Assistant hint: Ask chatbot for gas-wise recommendations.</p>
