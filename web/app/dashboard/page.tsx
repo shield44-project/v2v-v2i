@@ -4,6 +4,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { moduleDefinitions } from "@/app/modules";
 import { moduleVisualBySlug } from "@/app/module-visuals";
+import { getVisibleModules } from "@/app/module-access";
 import UserSessionPill from "@/app/_components/user-session-pill";
 
 export default async function DashboardPage() {
@@ -12,6 +13,7 @@ export default async function DashboardPage() {
     redirect("/signin");
   }
   const userLabel = session.user.email ?? session.user.name ?? "Google user";
+  const visibleModules = getVisibleModules(moduleDefinitions, session.user.email);
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-6xl px-6 py-10">
@@ -49,7 +51,7 @@ export default async function DashboardPage() {
 
       {/* module grid */}
       <section className="grid gap-4 sm:grid-cols-2">
-        {moduleDefinitions.map((moduleItem, i) => (
+        {visibleModules.map((moduleItem, i) => (
           <Link
             key={moduleItem.slug}
             href={`/${moduleItem.slug}`}

@@ -3,13 +3,13 @@ import Image from "next/image";
 import { auth } from "@/auth";
 import { moduleDefinitions } from "@/app/modules";
 import { moduleVisualBySlug } from "@/app/module-visuals";
+import { getVisibleModules } from "@/app/module-access";
 import UserSessionPill from "@/app/_components/user-session-pill";
 import HomeAiChatbot from "@/app/_components/home-ai-chatbot";
 
-const appNodes = moduleDefinitions;
-
 export default async function Home() {
   const session = await auth();
+  const appNodes = getVisibleModules(moduleDefinitions, session?.user?.email);
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-6xl px-6 py-8">

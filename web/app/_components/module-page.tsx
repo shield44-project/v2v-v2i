@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getModuleBySlug } from "@/app/modules";
+import { canAccessModule, isAdminEmail } from "@/app/module-access";
 import ModuleInteractivePanel from "@/app/_components/module-interactive-panel";
 import UserSessionPill from "@/app/_components/user-session-pill";
 
@@ -16,6 +17,12 @@ export default async function ModulePage({ slug }: ModulePageProps) {
   }
 
   const session = await auth();
+  const email = session?.user?.email ?? null;
+  const isAdminUser = isAdminEmail(email);
+
+  if (!canAccessModule(moduleInfo.slug, email)) {
+    redirect(session?.user ? "/dashboard" : "/signin");
+  }
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-6xl px-6 py-8">
@@ -56,7 +63,11 @@ export default async function ModulePage({ slug }: ModulePageProps) {
       </section>
 
       <div id="module-live-tools">
-        <ModuleInteractivePanel slug={moduleInfo.slug} title={moduleInfo.title} />
+        <ModuleInteractivePanel
+          slug={moduleInfo.slug}
+          title={moduleInfo.title}
+          isAdminUser={isAdminUser}
+        />
       </div>
     </main>
   );

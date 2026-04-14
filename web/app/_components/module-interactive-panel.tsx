@@ -37,6 +37,7 @@ const StreetLevelMap3D = dynamic(() => import("@/app/_components/street-level-ma
 type ModuleInteractivePanelProps = {
   slug: string;
   title: string;
+  isAdminUser: boolean;
 };
 
 const ROLE_FROM_SLUG: Record<string, NodeRole> = {
@@ -266,7 +267,7 @@ function buildChatbotReply(
   return `${aiSummary} ${recommendation} ${nearest}`;
 }
 
-export default function ModuleInteractivePanel({ slug, title }: ModuleInteractivePanelProps) {
+export default function ModuleInteractivePanel({ slug, title, isAdminUser }: ModuleInteractivePanelProps) {
   const role = ROLE_FROM_SLUG[slug] ?? "admin";
   const [snapshot, setSnapshot] = useState<RealtimeSnapshot>(() => readSnapshot());
   const [mapMode, setMapMode] = useState<MapMode>("street");
@@ -956,7 +957,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
             <Image src="/icons/monitoring.svg" alt="Monitoring icon" width={20} height={20} />
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">Live Monitoring</span>
           </div>
-          {(role === "emergency" || role === "vehicle1" || role === "vehicle2") && (
+          {isAdminUser && (role === "emergency" || role === "vehicle1" || role === "vehicle2") && (
             <button
               type="button"
               onClick={() => setSimulationMode((v) => !v)}
@@ -968,8 +969,9 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
         </div>
       </div>
 
-      <article className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-        <div className="grid gap-3 lg:grid-cols-4">
+      {isAdminUser ? (
+        <article className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="grid gap-3 lg:grid-cols-4">
           <div className="space-y-2">
             <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">View Modes</p>
             <div className="flex flex-wrap gap-2 text-xs">
@@ -1068,8 +1070,16 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
               {activeAiModel.specialization}
             </p>
           </div>
-        </div>
-      </article>
+          </div>
+        </article>
+      ) : (
+        <article className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <h3 className="font-semibold text-zinc-100">Basic User View</h3>
+          <p className="mt-2 text-sm text-zinc-400">
+            Advanced speed, heading, and route controls are restricted to admin accounts.
+          </p>
+        </article>
+      )}
 
       <div className="mb-5 grid gap-4 xl:grid-cols-4">
         <article className="glass-panel layered-card float-soft rounded-xl p-4 xl:col-span-1">
@@ -1258,6 +1268,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                   type="button"
                   className={`rounded-md border px-3 py-2 text-sm uppercase transition ${snapshot.emergency.vehicleType === vehicleType ? "tab-active" : "border-zinc-700 text-zinc-300 hover:border-zinc-500"}`}
                   onClick={() => setEmergencyVehicleType(vehicleType)}
+                  disabled={!isAdminUser}
                 >
                   {vehicleType === "ambulance" ? "🚑" : vehicleType === "fire" ? "🚒" : "🚓"} {vehicleType}
                 </button>
@@ -1274,6 +1285,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                     ? "ev-active-glow border-red-400 bg-gradient-to-br from-red-500/35 via-fuchsia-500/20 to-cyan-500/20 text-red-100"
                     : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-cyan-500/50"
                 }`}
+                disabled={!isAdminUser}
               >
                 <span className="flex h-full flex-col items-center justify-center gap-1">
                   <Image
@@ -1288,7 +1300,7 @@ export default function ModuleInteractivePanel({ slug, title }: ModuleInteractiv
                   </span>
                 </span>
               </button>
-              <button type="button" className="btn-secondary" onClick={toggleKalman}>
+              <button type="button" className="btn-secondary" onClick={toggleKalman} disabled={!isAdminUser}>
                 Kalman {snapshot.emergency.kalmanEnabled ? "ON" : "OFF"}
               </button>
             </div>
