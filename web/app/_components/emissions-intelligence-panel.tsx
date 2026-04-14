@@ -198,6 +198,7 @@ const HEALTH_SYSTEMS = [
 const DISEASES = ["Asthma", "Lung cancer", "COPD", "Cardiovascular diseases"];
 const MAX_HISTORY_LENGTH = 34;
 const AQI_ALERT_THRESHOLD = 150;
+const AI_REDUCTION_DISPLAY_SCALE = 2.4;
 
 const GAS_ORDER = GAS_DETAILS.map((gas) => gas.key);
 
@@ -367,7 +368,7 @@ export default function EmissionsIntelligencePanel() {
           <h2 className="text-2xl font-semibold">Traffic Emissions Intelligence Suite</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`rounded-md border px-2 py-1 text-xs ${secondaryClass}`}>🧾 Google Profile</span>
+          <span className={`rounded-md border px-2 py-1 text-xs ${secondaryClass}`}>🧾 User Profile (Google)</span>
           <button
             type="button"
             className={`rounded-md border px-3 py-1 text-xs ${secondaryClass}`}
@@ -455,7 +456,7 @@ export default function EmissionsIntelligencePanel() {
               </div>
               <p className={`text-xs ${mutedText}`}>{vehicle.vehicleType} · {vehicle.fuelType} · {vehicle.aiStrategy}</p>
               <div className="mt-2 h-1.5 rounded-full bg-zinc-800/50">
-                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.max(5, vehicle.aiReductionPercent * 2.4)}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.max(5, vehicle.aiReductionPercent * AI_REDUCTION_DISPLAY_SCALE)}%` }} />
               </div>
               <p className="mt-2 text-xs">Before {vehicle.beforeTotal.toFixed(1)} → After {vehicle.afterTotal.toFixed(1)} mg/min</p>
               <p className="text-xs">{selectedGas.toUpperCase()}: {vehicle.beforeByGas[selectedGas].toFixed(2)} → {vehicle.afterByGas[selectedGas].toFixed(2)}</p>
@@ -560,7 +561,7 @@ export default function EmissionsIntelligencePanel() {
             })}
           </div>
           <div className="space-y-1 text-xs">
-            <p>⚠️ Alert threshold: AQI {'>'} {AQI_ALERT_THRESHOLD}</p>
+            <p>⚠️ Alert threshold: AQI &gt; {AQI_ALERT_THRESHOLD}</p>
             <p>{latest.aqi > AQI_ALERT_THRESHOLD ? "Danger zone alerts active" : "Air quality within managed range"}</p>
             <p>Map integration mode: simulated IoT + V2X feed</p>
             <p>Assistant hint: Ask chatbot for gas-wise recommendations.</p>
