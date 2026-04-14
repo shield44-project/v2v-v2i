@@ -11,6 +11,7 @@ export default async function DashboardPage() {
   if (!session?.user) {
     redirect("/signin");
   }
+  const userLabel = session.user.email ?? session.user.name ?? "Google user";
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-6xl px-6 py-10">
@@ -27,12 +28,18 @@ export default async function DashboardPage() {
             </span>
           </div>
           <h1 className="text-gradient mt-2 text-3xl font-bold">V2X Operations Dashboard</h1>
-          <p className="mt-2 text-zinc-400 text-sm">
-            Signed in as{" "}
-            <span className="text-zinc-200 font-medium">
-              {session.user.email ?? session.user.name ?? "Google user"}
-            </span>
-          </p>
+          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
+            <Image
+              src={session.user.image ?? "/icons/default-profile.svg"}
+              alt={`${userLabel} avatar`}
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-full border border-zinc-700 bg-zinc-900 object-cover"
+            />
+            <p>
+              Signed in as <span className="text-zinc-200 font-medium">{userLabel}</span>
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link className="btn-secondary" href="/">Main Index</Link>
