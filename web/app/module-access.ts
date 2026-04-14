@@ -1,7 +1,7 @@
 import { ADMIN_EMAILS_HARDCODED } from "@/lib/v2x/admin";
 import type { ModuleDefinition } from "@/app/modules";
 
-export const NORMAL_USER_MODULE_SLUGS = ["emergency", "vehicle1", "vehicle2"] as const;
+export const NORMAL_USER_MODULE_SLUGS = ["emergency", "vehicle1", "vehicle2", "gas-emission-simulation"] as const;
 
 const NORMAL_USER_MODULE_SET = new Set<string>(NORMAL_USER_MODULE_SLUGS);
 
