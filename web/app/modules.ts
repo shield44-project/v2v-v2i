@@ -71,6 +71,19 @@ export const moduleDefinitions: ModuleDefinition[] = [
     primaryAction: "Open Vehicle 2 View",
   },
   {
+    slug: "gas-emission-simulation",
+    title: "Gas Emission Simulation",
+    badge: "Environment AI",
+    description: "Dedicated high-visual gas emission simulation with AI traffic decisions and fullscreen exploration.",
+    highlights: [
+      "Large-scale 3D city simulation",
+      "AI traffic optimization controls",
+      "Vehicle-wise gas analytics",
+      "Realtime AQI and pollutant trends",
+    ],
+    primaryAction: "Open Gas Emission Simulation",
+  },
+  {
     slug: "admin",
     title: "Admin Control Center",
     badge: "Secure",

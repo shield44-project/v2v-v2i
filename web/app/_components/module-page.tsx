@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getModuleBySlug } from "@/app/modules";
 import { canAccessModule, isAdminEmail } from "@/app/module-access";
 import ModuleInteractivePanel from "@/app/_components/module-interactive-panel";
+import EmissionsIntelligencePanel from "@/app/_components/emissions-intelligence-panel";
 import UserSessionPill from "@/app/_components/user-session-pill";
 
 type ModulePageProps = {
@@ -63,11 +64,15 @@ export default async function ModulePage({ slug }: ModulePageProps) {
       </section>
 
       <div id="module-live-tools">
-        <ModuleInteractivePanel
-          slug={moduleInfo.slug}
-          title={moduleInfo.title}
-          isAdminUser={isAdminUser}
-        />
+        {moduleInfo.slug === "gas-emission-simulation" ? (
+          <EmissionsIntelligencePanel />
+        ) : (
+          <ModuleInteractivePanel
+            slug={moduleInfo.slug}
+            title={moduleInfo.title}
+            isAdminUser={isAdminUser}
+          />
+        )}
       </div>
     </main>
   );

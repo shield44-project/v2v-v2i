@@ -2,6 +2,7 @@ export const moduleVisualBySlug: Record<string, string> = {
   control: "/flash/city-grid.svg",
   emergency: "/icons/broadcasting.svg",
   signal: "/icons/monitoring.svg",
+  "gas-emission-simulation": "/flash/city-grid.svg",
   vehicle1: "/vehicles/civilian-car.svg",
   vehicle2: "/vehicles/civilian-car.svg",
   admin: "/flash/city-grid.svg",
