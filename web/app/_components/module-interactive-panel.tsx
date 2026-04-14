@@ -269,6 +269,7 @@ function buildChatbotReply(
 
 export default function ModuleInteractivePanel({ slug, title, isAdminUser }: ModuleInteractivePanelProps) {
   const role = ROLE_FROM_SLUG[slug] ?? "admin";
+  const restrictedControlHint = "Admin Gmail account required to change this control.";
   const [snapshot, setSnapshot] = useState<RealtimeSnapshot>(() => readSnapshot());
   const [mapMode, setMapMode] = useState<MapMode>("street");
   const [mapView, setMapView] = useState<"2d" | "3d">("2d");
@@ -970,7 +971,10 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
       </div>
 
       {isAdminUser ? (
-        <article className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+        <article
+          className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+          aria-label="Basic user module status"
+        >
           <div className="grid gap-3 lg:grid-cols-4">
           <div className="space-y-2">
             <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">View Modes</p>
@@ -1269,6 +1273,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                   className={`rounded-md border px-3 py-2 text-sm uppercase transition ${snapshot.emergency.vehicleType === vehicleType ? "tab-active" : "border-zinc-700 text-zinc-300 hover:border-zinc-500"}`}
                   onClick={() => setEmergencyVehicleType(vehicleType)}
                   disabled={!isAdminUser}
+                  title={!isAdminUser ? restrictedControlHint : undefined}
                 >
                   {vehicleType === "ambulance" ? "🚑" : vehicleType === "fire" ? "🚒" : "🚓"} {vehicleType}
                 </button>
@@ -1286,6 +1291,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                     : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-cyan-500/50"
                 }`}
                 disabled={!isAdminUser}
+                title={!isAdminUser ? restrictedControlHint : undefined}
               >
                 <span className="flex h-full flex-col items-center justify-center gap-1">
                   <Image
@@ -1300,7 +1306,13 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                   </span>
                 </span>
               </button>
-              <button type="button" className="btn-secondary" onClick={toggleKalman} disabled={!isAdminUser}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={toggleKalman}
+                disabled={!isAdminUser}
+                title={!isAdminUser ? restrictedControlHint : undefined}
+              >
                 Kalman {snapshot.emergency.kalmanEnabled ? "ON" : "OFF"}
               </button>
             </div>
