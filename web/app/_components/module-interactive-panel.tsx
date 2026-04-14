@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import EmissionsIntelligencePanel from "@/app/_components/emissions-intelligence-panel";
 import {
   appendLog,
   readSnapshot,
@@ -46,6 +45,7 @@ const ROLE_FROM_SLUG: Record<string, NodeRole> = {
   signal: "signal",
   vehicle1: "vehicle1",
   vehicle2: "vehicle2",
+  "gas-emission-simulation": "admin",
   admin: "admin",
   "admin-preview": "admin",
   control: "admin",
@@ -1260,8 +1260,6 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
           </div>
         </article>
       </div>
-
-      <EmissionsIntelligencePanel />
 
       {/* ── EMERGENCY VEHICLE ──────────────────────────────────────────────── */}
       {role === "emergency" && (
