@@ -151,6 +151,10 @@ function createAsphaltTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/**
+ * Applies a small random HSL variation to a base color.
+ * `spread` controls the approximate lightness variation range on a 0..255 scale.
+ */
 function varyColor(hex: number, spread = 24): number {
   const c = new THREE.Color(hex);
   const hsl = { h: 0, s: 0, l: 0 };
@@ -169,7 +173,7 @@ function createVehicleDefs(count: number): VehicleDef[] {
       id: `${template.id}-${i + 1}`,
       color: varyColor(template.color),
       dir: Math.random() > 0.52 ? 1 : -1,
-      startT: ((i / count) + Math.random() * 0.1) % 1,
+      startT: Math.min(0.995, i / count + (Math.random() * 0.7) / count),
       baseSpeed: template.baseSpeed * (0.82 + Math.random() * 0.42),
       emitRate: template.emitRate * (0.8 + Math.random() * 0.45),
     });
@@ -498,14 +502,15 @@ function buildScene(
       v.decisionCooldown -= dt;
       if (v.decisionCooldown <= 0) {
         if (aiOn) {
-          const laneChoice = Math.random() < 0.5 ? 0 : Math.random() < 0.5 ? -1 : 1;
+          const laneRoll = Math.random();
+          const laneChoice = laneRoll < 1 / 3 ? -1 : laneRoll < 2 / 3 ? 0 : 1;
           v.targetLaneOffset = laneChoice * ROAD_W * 0.18;
           v.targetSpeedFactor = Math.min(1.35, Math.max(0.9, 1.02 + Math.random() * 0.32 - (congestion - 1) * 0.18));
         } else {
           const jitterLane = (Math.random() * 2 - 1) * ROAD_W * 0.16;
           v.targetLaneOffset = jitterLane;
-          const randomBrake = Math.random() < 0.15 ? 0.52 : 0.75;
-          v.targetSpeedFactor = Math.min(1.08, Math.max(0.5, randomBrake + Math.random() * 0.34));
+          const baseSpeedFactor = Math.random() < 0.15 ? 0.52 : 0.75;
+          v.targetSpeedFactor = Math.min(1.08, Math.max(0.5, baseSpeedFactor + Math.random() * 0.34));
         }
         v.decisionCooldown = 1.2 + Math.random() * 3.6;
       }
