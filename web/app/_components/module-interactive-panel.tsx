@@ -973,7 +973,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
       {isAdminUser ? (
         <article
           className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4"
-          aria-label="Basic user module status"
+          aria-label="Admin controls panel"
         >
           <div className="grid gap-3 lg:grid-cols-4">
           <div className="space-y-2">
@@ -1080,7 +1080,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
         <article className="mb-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
           <h3 className="font-semibold text-zinc-100">Basic User View</h3>
           <p className="mt-2 text-sm text-zinc-400">
-            Advanced speed, heading, and route controls are restricted to admin accounts.
+            Advanced module controls are restricted to admin accounts.
           </p>
         </article>
       )}
