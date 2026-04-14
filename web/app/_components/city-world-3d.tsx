@@ -9,6 +9,12 @@ const LOOP_Z = 102;
 const PARTICLE_POOL = 44;
 const AI_SPEED_BOOST = 1.28;
 const VEHICLE_COUNT = 18;
+const START_POSITION_JITTER = 0.7;
+const LEFT_LANE_THRESHOLD = 1 / 3;
+const CENTER_LANE_THRESHOLD = 2 / 3;
+const SLOW_VEHICLE_PROBABILITY = 0.15;
+const SLOW_SPEED_FACTOR = 0.52;
+const NORMAL_SPEED_FACTOR = 0.75;
 
 type Dir = 1 | -1;
 
@@ -173,7 +179,7 @@ function createVehicleDefs(count: number): VehicleDef[] {
       id: `${template.id}-${i + 1}`,
       color: varyColor(template.color),
       dir: Math.random() > 0.52 ? 1 : -1,
-      startT: Math.min(0.995, i / count + (Math.random() * 0.7) / count),
+      startT: Math.min(0.995, i / count + (Math.random() * START_POSITION_JITTER) / count),
       baseSpeed: template.baseSpeed * (0.82 + Math.random() * 0.42),
       emitRate: template.emitRate * (0.8 + Math.random() * 0.45),
     });
@@ -503,13 +509,13 @@ function buildScene(
       if (v.decisionCooldown <= 0) {
         if (aiOn) {
           const laneRoll = Math.random();
-          const laneChoice = laneRoll < 1 / 3 ? -1 : laneRoll < 2 / 3 ? 0 : 1;
+          const laneChoice = laneRoll < LEFT_LANE_THRESHOLD ? -1 : laneRoll < CENTER_LANE_THRESHOLD ? 0 : 1;
           v.targetLaneOffset = laneChoice * ROAD_W * 0.18;
           v.targetSpeedFactor = Math.min(1.35, Math.max(0.9, 1.02 + Math.random() * 0.32 - (congestion - 1) * 0.18));
         } else {
           const jitterLane = (Math.random() * 2 - 1) * ROAD_W * 0.16;
           v.targetLaneOffset = jitterLane;
-          const baseSpeedFactor = Math.random() < 0.15 ? 0.52 : 0.75;
+          const baseSpeedFactor = Math.random() < SLOW_VEHICLE_PROBABILITY ? SLOW_SPEED_FACTOR : NORMAL_SPEED_FACTOR;
           v.targetSpeedFactor = Math.min(1.08, Math.max(0.5, baseSpeedFactor + Math.random() * 0.34));
         }
         v.decisionCooldown = 1.2 + Math.random() * 3.6;
