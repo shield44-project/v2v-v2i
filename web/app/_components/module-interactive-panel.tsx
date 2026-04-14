@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import EmissionsIntelligencePanel from "@/app/_components/emissions-intelligence-panel";
 import {
   appendLog,
   readSnapshot,
@@ -1259,6 +1260,8 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
           </div>
         </article>
       </div>
+
+      <EmissionsIntelligencePanel />
 
       {/* ── EMERGENCY VEHICLE ──────────────────────────────────────────────── */}
       {role === "emergency" && (
