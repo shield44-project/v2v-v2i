@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { ADMIN_EMAILS_HARDCODED } from "@/lib/v2x/admin";
 import AdminDashboard from "@/app/_components/admin-dashboard";
+import { isAdminEmail } from "@/app/module-access";
+import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
   const session = await auth();
-
-  // If signed in via Google and email is in the hardcoded admin list,
-  // pass isInitiallyAdmin=true so the dashboard unlocks without a password.
   const email = session?.user?.email ?? "";
-  const isInitiallyAdmin = email
-    ? ADMIN_EMAILS_HARDCODED.includes(email.toLowerCase())
-    : false;
+
+  if (!session?.user) {
+    redirect("/signin");
+  }
+  if (!isAdminEmail(email)) {
+    redirect("/dashboard");
+  }
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-6xl px-6 py-8">
@@ -39,7 +41,7 @@ export default async function AdminPage() {
 
       <AdminDashboard
         currentUserEmail={email || "guest"}
-        isInitiallyAdmin={isInitiallyAdmin}
+        isInitiallyAdmin
       />
     </main>
   );
