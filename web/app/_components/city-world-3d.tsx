@@ -12,6 +12,9 @@ const VEHICLE_COUNT = 18;
 const START_POSITION_JITTER = 0.7;
 const LEFT_LANE_THRESHOLD = 1 / 3;
 const CENTER_LANE_THRESHOLD = 2 / 3;
+const LEFT_LANE = -1;
+const CENTER_LANE = 0;
+const RIGHT_LANE = 1;
 const SLOW_VEHICLE_PROBABILITY = 0.15;
 const SLOW_SPEED_FACTOR = 0.52;
 const NORMAL_SPEED_FACTOR = 0.75;
@@ -159,7 +162,7 @@ function createAsphaltTexture(): THREE.CanvasTexture {
 
 /**
  * Applies a small random HSL variation to a base color.
- * `spread` controls the approximate lightness variation range on a 0..255 scale.
+ * `spread` is a byte-like value (0..255) that is normalized to a 0..1 lightness delta internally.
  */
 function varyColor(hex: number, spread = 24): number {
   const c = new THREE.Color(hex);
@@ -509,7 +512,7 @@ function buildScene(
       if (v.decisionCooldown <= 0) {
         if (aiOn) {
           const laneRoll = Math.random();
-          const laneChoice = laneRoll < LEFT_LANE_THRESHOLD ? -1 : laneRoll < CENTER_LANE_THRESHOLD ? 0 : 1;
+          const laneChoice = laneRoll < LEFT_LANE_THRESHOLD ? LEFT_LANE : laneRoll < CENTER_LANE_THRESHOLD ? CENTER_LANE : RIGHT_LANE;
           v.targetLaneOffset = laneChoice * ROAD_W * 0.18;
           v.targetSpeedFactor = Math.min(1.35, Math.max(0.9, 1.02 + Math.random() * 0.32 - (congestion - 1) * 0.18));
         } else {
@@ -601,6 +604,7 @@ export default function CityWorld3D({
   const scenarioRef = useRef(scenario);
   const [aiOn, setAiOn] = useState(aiOptimized);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
 
   useEffect(() => {
     aiRef.current = aiOptimized;
@@ -620,11 +624,20 @@ export default function CityWorld3D({
   const handleFullscreenToggle = async () => {
     const container = containerRef.current;
     if (!container) return;
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-      return;
+    setFullscreenError(null);
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      if (!("requestFullscreen" in container)) {
+        setFullscreenError("Fullscreen is not supported in this browser.");
+        return;
+      }
+      await container.requestFullscreen();
+    } catch {
+      setFullscreenError("Fullscreen request was blocked by the browser.");
     }
-    await container.requestFullscreen();
   };
 
   useEffect(() => {
@@ -685,6 +698,11 @@ export default function CityWorld3D({
       <p className="absolute right-3 top-3 rounded-md border border-zinc-700/50 bg-black/70 px-2 py-1 text-[10px] text-zinc-400 backdrop-blur">
         Drag to orbit · scroll to zoom
       </p>
+      {fullscreenError && (
+        <p className="absolute right-3 top-10 rounded-md border border-red-500/40 bg-black/70 px-2 py-1 text-[10px] text-red-300 backdrop-blur">
+          {fullscreenError}
+        </p>
+      )}
     </div>
   );
 }
