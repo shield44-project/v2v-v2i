@@ -196,6 +196,8 @@ const HEALTH_SYSTEMS = [
 ];
 
 const DISEASES = ["Asthma", "Lung cancer", "COPD", "Cardiovascular diseases"];
+const MAX_HISTORY_LENGTH = 34;
+const AQI_ALERT_THRESHOLD = 150;
 
 const GAS_ORDER = GAS_DETAILS.map((gas) => gas.key);
 
@@ -296,7 +298,7 @@ export default function EmissionsIntelligencePanel() {
         vehicleTicks,
       };
 
-      setHistory((prev) => [...prev.slice(-34), nextTick]);
+      setHistory((prev) => [...prev.slice(-(MAX_HISTORY_LENGTH - 1)), nextTick]);
     }, 1000);
 
     return () => window.clearInterval(timer);
@@ -458,7 +460,12 @@ export default function EmissionsIntelligencePanel() {
               <p className="mt-2 text-xs">Before {vehicle.beforeTotal.toFixed(1)} → After {vehicle.afterTotal.toFixed(1)} mg/min</p>
               <p className="text-xs">{selectedGas.toUpperCase()}: {vehicle.beforeByGas[selectedGas].toFixed(2)} → {vehicle.afterByGas[selectedGas].toFixed(2)}</p>
               <div className="relative mt-2 h-8 overflow-hidden rounded bg-black/30">
-                <span className="absolute top-1 text-lg" style={{ left: `${((tickRef.current * 6 + index * 14) % 80)}%` }}>{vehicle.icon}</span>
+                <span
+                  className="absolute top-1 text-lg motion-safe:animate-[ping_2.8s_linear_infinite]"
+                  style={{ left: `${(index * 14) % 80}%` }}
+                >
+                  {vehicle.icon}
+                </span>
                 <span className="absolute right-1 top-1 text-[10px] text-zinc-400">3D lane sim</span>
               </div>
             </div>
@@ -553,8 +560,8 @@ export default function EmissionsIntelligencePanel() {
             })}
           </div>
           <div className="space-y-1 text-xs">
-            <p>⚠️ Alert threshold: AQI {'>'} 150</p>
-            <p>{latest.aqi > 150 ? "Danger zone alerts active" : "Air quality within managed range"}</p>
+            <p>⚠️ Alert threshold: AQI {'>'} {AQI_ALERT_THRESHOLD}</p>
+            <p>{latest.aqi > AQI_ALERT_THRESHOLD ? "Danger zone alerts active" : "Air quality within managed range"}</p>
             <p>Map integration mode: simulated IoT + V2X feed</p>
             <p>Assistant hint: Ask chatbot for gas-wise recommendations.</p>
           </div>
