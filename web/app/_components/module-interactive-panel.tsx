@@ -94,6 +94,7 @@ type ChatbotMessage = {
   text: string;
 };
 const MAX_CHAT_HISTORY = 10;
+const RESTRICTED_CONTROL_HINT = "Admin Gmail account required to change this control.";
 const VEHICLE_ICON_BY_NODE_ID: Record<string, string> = {
   emergency: "🚑",
   signal: "🚦",
@@ -269,7 +270,6 @@ function buildChatbotReply(
 
 export default function ModuleInteractivePanel({ slug, title, isAdminUser }: ModuleInteractivePanelProps) {
   const role = ROLE_FROM_SLUG[slug] ?? "admin";
-  const restrictedControlHint = "Admin Gmail account required to change this control.";
   const [snapshot, setSnapshot] = useState<RealtimeSnapshot>(() => readSnapshot());
   const [mapMode, setMapMode] = useState<MapMode>("street");
   const [mapView, setMapView] = useState<"2d" | "3d">("2d");
@@ -1273,7 +1273,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                   className={`rounded-md border px-3 py-2 text-sm uppercase transition ${snapshot.emergency.vehicleType === vehicleType ? "tab-active" : "border-zinc-700 text-zinc-300 hover:border-zinc-500"}`}
                   onClick={() => setEmergencyVehicleType(vehicleType)}
                   disabled={!isAdminUser}
-                  title={!isAdminUser ? restrictedControlHint : undefined}
+                  title={!isAdminUser ? RESTRICTED_CONTROL_HINT : undefined}
                 >
                   {vehicleType === "ambulance" ? "🚑" : vehicleType === "fire" ? "🚒" : "🚓"} {vehicleType}
                 </button>
@@ -1291,7 +1291,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                     : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-cyan-500/50"
                 }`}
                 disabled={!isAdminUser}
-                title={!isAdminUser ? restrictedControlHint : undefined}
+                title={!isAdminUser ? RESTRICTED_CONTROL_HINT : undefined}
               >
                 <span className="flex h-full flex-col items-center justify-center gap-1">
                   <Image
@@ -1311,7 +1311,7 @@ export default function ModuleInteractivePanel({ slug, title, isAdminUser }: Mod
                 className="btn-secondary"
                 onClick={toggleKalman}
                 disabled={!isAdminUser}
-                title={!isAdminUser ? restrictedControlHint : undefined}
+                title={!isAdminUser ? RESTRICTED_CONTROL_HINT : undefined}
               >
                 Kalman {snapshot.emergency.kalmanEnabled ? "ON" : "OFF"}
               </button>
