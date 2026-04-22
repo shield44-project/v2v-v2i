@@ -8,6 +8,7 @@ export type TrafficMode = 'normal' | 'emergency' | 'eco' | 'congestion';
 export interface TrafficModeConfig {
   currentMode: TrafficMode;
   evPresent: boolean;
+  evRoute?: string;
   trafficVolume: number; // vehicles per minute
   averageSpeed: number; // km/h
   lastSwitchTime: string;
