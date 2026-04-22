@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { getAQIColor, getAQICategory } from '@/lib/v2x/pollution';
 
 export interface PollutionPredictionWidgetProps {

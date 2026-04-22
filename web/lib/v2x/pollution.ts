@@ -220,16 +220,15 @@ export function predictPollution(
       currentAQI.aqi * decayFactor * windFactor * inversionFactor + trafficDensity * 0.1
     );
 
-    const { category, primaryPollutant } = calculateAQI({ ...currentAQI, aqi });
+    const { category } = calculateAQI({ ...currentAQI, aqi });
+
+    const futureTimestamp = new Date(currentAQI.timestamp).getTime() + hoursAhead * 3600000;
 
     return {
       ...currentAQI,
       aqi,
       aqiCategory: category,
-      timestamp: new Date(
-        currentAQI.timestamp
-      ).getTime() +
-        hoursAhead * 3600000).toISOString(),
+      timestamp: new Date(futureTimestamp).toISOString(),
     };
   };
 

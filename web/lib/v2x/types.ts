@@ -109,7 +109,7 @@ export type Notification = {
   read: boolean;
   readAt?: string;
   expiry?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 };
 
 // ─── POLLUTION TYPES ────────────────────────────────────────

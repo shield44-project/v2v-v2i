@@ -118,7 +118,7 @@ const VEHICLE_DATABASE: Record<string, VehicleRecord> = {
  * Simulate OCR - In production, use Tesseract.js or cloud API
  */
 export async function recognizeNumberPlateOCR(
-  imageData: string | HTMLImageElement | Canvas
+  _imageData: string | HTMLImageElement | Canvas
 ): Promise<NumberPlateOCRResult> {
   // Simulate OCR processing
   return new Promise((resolve) => {

@@ -149,7 +149,7 @@ export function calculateCumulativeExposure(
   const riskScores = { low: 1, moderate: 2, high: 3, critical: 4 };
   const avgRiskScore =
     exposures.reduce((sum, exp) => sum + (riskScores[exp.riskLevel] || 1), 0) / exposures.length;
-  const avgRiskLevel =
+  const avgRiskLevelValue =
     avgRiskScore < 1.5
       ? 'low'
       : avgRiskScore < 2.5
@@ -167,7 +167,7 @@ export function calculateCumulativeExposure(
   return {
     totalPowerDensity,
     maxSource,
-    averageRiskLevel,
+    averageRiskLevel: avgRiskLevelValue,
     safetyMargin: Math.round(safetyMargin),
   };
 }

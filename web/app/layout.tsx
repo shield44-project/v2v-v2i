@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Image from "next/image";
 import "./globals.css";
 import SupportIssueMailButton from "@/app/_components/support-issue-mail-button";
 import AppFooter from "@/app/_components/app-footer";
@@ -58,7 +59,7 @@ export default function RootLayout({
             <div className="flex items-center justify-between">
               {/* Logo */}
               <div className="flex items-center gap-3">
-                <img src="/tech-titans-logo.svg" alt="Tech Titans" className="w-10 h-10" />
+                <Image src="/tech-titans-logo.svg" alt="Tech Titans" width={40} height={40} className="w-10 h-10" />
                 <div>
                   <h1 className="text-neo-gradient font-bold text-xl tracking-tight">V2X Connect</h1>
                   <p className="text-xs text-neo-text-muted">by Tech Titans</p>

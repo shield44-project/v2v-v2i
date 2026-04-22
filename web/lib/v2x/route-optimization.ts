@@ -8,8 +8,7 @@
  * - EV requirements (person pickup, hospital drop)
  */
 
-import { calculateTotalEmissions, VehicleEmissionProfile } from './emissions';
-import { AirQualityData } from './pollution';
+import { VehicleEmissionProfile } from './emissions';
 
 export type RouteObjective = 'fastest' | 'shortest' | 'eco-friendly' | 'balanced' | 'safest';
 

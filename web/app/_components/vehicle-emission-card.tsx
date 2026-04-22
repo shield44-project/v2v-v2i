@@ -11,7 +11,6 @@ export interface VehicleEmissionCardProps {
   distanceTraveled?: number;
   currentEmissionPerHour?: number;
   timeElapsed?: number; // seconds
-  imageUrl?: string;
   onClick?: () => void;
 }
 
@@ -24,7 +23,6 @@ export const VehicleEmissionCard: React.FC<VehicleEmissionCardProps> = ({
   distanceTraveled,
   currentEmissionPerHour,
   timeElapsed,
-  imageUrl,
   onClick,
 }) => {
   const getVehicleIcon = () => {

@@ -162,7 +162,7 @@ export function stopVoicePlayback(): void {
 /**
  * Check browser support for voice synthesis
  */
-export function isVoiceSupportedBy Browser(): boolean {
+export function isVoiceSupportedByBrowser(): boolean {
   return !!(window.SpeechSynthesisUtterance && window.speechSynthesis);
 }
 

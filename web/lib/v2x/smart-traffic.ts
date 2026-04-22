@@ -12,6 +12,7 @@ export interface TrafficModeConfig {
   averageSpeed: number; // km/h
   lastSwitchTime: string;
   switchReason: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 }
 
 export interface SignalTiming {
@@ -157,7 +158,7 @@ export function generateSmartTrafficState(
   const timings = calculateSignalTimings(config.currentMode, trafficDistribution, config.evRoute);
 
   // Calculate signal states based on mode
-  let signals = {
+  const signals = {
     north: 'red' as const,
     south: 'red' as const,
     east: 'red' as const,
@@ -165,7 +166,6 @@ export function generateSmartTrafficState(
   };
 
   if (config.currentMode === 'emergency' && config.evRoute) {
-    const evDirNum = config.evRoute.charCodeAt(0);
     if (config.evRoute === 'north' || config.evRoute === 'south') {
       signals.north = 'green';
       signals.south = 'green';

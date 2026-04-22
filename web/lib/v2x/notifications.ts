@@ -44,7 +44,7 @@ export interface Notification {
   read: boolean;
   readAt?: string;
   expiry?: string; // ISO timestamp when notification expires
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface NotificationQueue {
