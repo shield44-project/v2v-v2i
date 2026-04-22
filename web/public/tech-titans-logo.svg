@@ -1,0 +1,65 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="titanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f5ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b00ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff00bf;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f5ff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#8b00ff;stop-opacity:0.8" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="rgba(15, 20, 48, 0.3)" stroke="url(#titanGradient)" stroke-width="2"/>
+  
+  <!-- Main T shape (Titans) -->
+  <g filter="url(#glow)">
+    <!-- Horizontal bar of T -->
+    <rect x="50" y="45" width="100" height="12" fill="url(#titanGradient)" rx="6"/>
+    
+    <!-- Vertical bar of T -->
+    <rect x="90" y="55" width="20" height="75" fill="url(#titanGradient)" rx="10"/>
+  </g>
+  
+  <!-- Circuit nodes at corners -->
+  <circle cx="60" cy="50" r="5" fill="#00f5ff" filter="url(#glow)"/>
+  <circle cx="140" cy="50" r="5" fill="#8b00ff" filter="url(#glow)"/>
+  <circle cx="110" cy="130" r="5" fill="#ff00bf" filter="url(#glow)"/>
+  
+  <!-- Connecting circuit lines -->
+  <path d="M 65 50 L 85 60" stroke="#00f5ff" stroke-width="2" fill="none" filter="url(#glow)"/>
+  <path d="M 135 50 L 115 60" stroke="#8b00ff" stroke-width="2" fill="none" filter="url(#glow)"/>
+  <path d="M 100 55 L 100 125" stroke="#ff00bf" stroke-width="2" fill="none" filter="url(#glow)" opacity="0.5"/>
+  
+  <!-- Center lightning bolt (EV/Energy) -->
+  <g fill="#00f5ff" filter="url(#glow)">
+    <polygon points="102,70 110,85 98,85 106,105 92,90 104,90"/>
+  </g>
+  
+  <!-- Orbiting nodes (V2X connectivity) -->
+  <circle cx="100" cy="100" r="50" fill="none" stroke="url(#glowGradient)" stroke-width="1" opacity="0.3" stroke-dasharray="5,3"/>
+  
+  <!-- Node points on circle -->
+  <circle cx="150" cy="100" r="4" fill="#00f5ff" filter="url(#glow)"/>
+  <circle cx="50" cy="100" r="4" fill="#8b00ff" filter="url(#glow)"/>
+  <circle cx="100" cy="150" r="4" fill="#ff00bf" filter="url(#glow)"/>
+  
+  <!-- Text: Tech Titans -->
+  <text x="100" y="170" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#00f5ff" filter="url(#glow)">
+    TECH TITANS
+  </text>
+  
+  <!-- Subtle subtitle -->
+  <text x="100" y="188" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#8b00ff" opacity="0.7">
+    V2X · SMART CITY
+  </text>
+</svg>

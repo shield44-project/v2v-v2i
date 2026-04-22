@@ -3,11 +3,26 @@
 @import "mapbox-gl/dist/mapbox-gl.css";
 
 :root {
-  --background: #050505;
-  --foreground: #e4e4e7;
-  --cyan: #00e5ff;
+  /* Neo-color theme */
+  --bg-primary: #0a0e27;
+  --bg-secondary: #1a1f3a;
+  --bg-tertiary: #151829;
+  --text-primary: #f5f5f5;
+  --text-secondary: #b0b0b0;
+  --text-muted: #666666;
+  
+  /* Neo accent colors */
+  --cyan: #00f5ff;
+  --purple: #8b00ff;
+  --magenta: #ff00bf;
+  --lime: #00ff00;
+  --orange: #ff6b35;
+  
+  /* Legacy compatibility */
+  --background: #0a0e27;
+  --foreground: #f5f5f5;
   --emerald: #10b981;
-  --red-accent: #ff2233;
+  --red-accent: #ff0055;
 }
 
 @theme inline {
@@ -604,4 +619,264 @@ input:focus, select:focus {
   border: 1px solid rgba(103, 232, 249, 0.5);
   background: rgba(3, 7, 18, 0.82);
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* NEO-COLOR THEME UTILITIES                                  */
+/* ────────────────────────────────────────────────────────── */
+
+/* Neo gradient text - primary */
+.text-neo-gradient {
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 50%, var(--magenta) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Neo cards with glassmorphism */
+.neo-card {
+  background: rgba(21, 24, 41, 0.4);
+  border: 1px solid rgba(0, 245, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.neo-card:hover {
+  border-color: rgba(0, 245, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.neo-card-purple {
+  border-color: rgba(139, 0, 255, 0.2);
+}
+
+.neo-card-purple:hover {
+  border-color: rgba(139, 0, 255, 0.5);
+  box-shadow: 0 0 20px rgba(139, 0, 255, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.neo-card-magenta {
+  border-color: rgba(255, 0, 191, 0.2);
+}
+
+.neo-card-magenta:hover {
+  border-color: rgba(255, 0, 191, 0.5);
+  box-shadow: 0 0 20px rgba(255, 0, 191, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Neo buttons */
+.neo-btn-primary {
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  color: var(--bg-primary);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+}
+
+.neo-btn-primary:hover {
+  box-shadow: 0 0 40px rgba(0, 245, 255, 0.6), 0 0 20px rgba(139, 0, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.neo-btn-secondary {
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.neo-btn-secondary:hover {
+  background: var(--cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+}
+
+/* Neo input fields */
+.neo-input {
+  background: rgba(21, 24, 41, 0.6);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.neo-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.3);
+  background: rgba(21, 24, 41, 0.8);
+}
+
+.neo-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Neo badges and status indicators */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.neo-badge-cyan {
+  background: rgba(0, 245, 255, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+}
+
+.neo-badge-purple {
+  background: rgba(139, 0, 255, 0.15);
+  color: var(--purple);
+  border: 1px solid rgba(139, 0, 255, 0.3);
+}
+
+.neo-badge-magenta {
+  background: rgba(255, 0, 191, 0.15);
+  color: var(--magenta);
+  border: 1px solid rgba(255, 0, 191, 0.3);
+}
+
+.neo-badge-success {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--lime);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+/* Neo status dot */
+.neo-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: neo-pulse-glow 2s ease-in-out infinite;
+}
+
+.neo-status-dot-cyan {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.neo-status-dot-purple {
+  background: var(--purple);
+  box-shadow: 0 0 8px var(--purple);
+}
+
+.neo-status-dot-magenta {
+  background: var(--magenta);
+  box-shadow: 0 0 8px var(--magenta);
+}
+
+/* Neo animations */
+@keyframes neo-pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px currentColor;
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 20px currentColor;
+  }
+}
+
+@keyframes neo-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes neo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-neo-pulse {
+  animation: neo-pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-neo-slide-in {
+  animation: neo-slide-in 0.3s ease-out;
+}
+
+.animate-neo-fade-in {
+  animation: neo-fade-in 0.3s ease-out;
+}
+
+/* Neo text utilities */
+.text-neo-primary {
+  color: var(--text-primary);
+}
+
+.text-neo-secondary {
+  color: var(--text-secondary);
+}
+
+.text-neo-muted {
+  color: var(--text-muted);
+}
+
+.text-neo-cyan {
+  color: var(--cyan);
+}
+
+.text-neo-purple {
+  color: var(--purple);
+}
+
+.text-neo-magenta {
+  color: var(--magenta);
+}
+
+/* Neo background utilities */
+.bg-neo-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-neo-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-neo-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+/* Neo border utilities */
+.border-neo-cyan {
+  border-color: rgba(0, 245, 255, 0.3);
+}
+
+.border-neo-purple {
+  border-color: rgba(139, 0, 255, 0.3);
+}
+
+.border-neo-magenta {
+  border-color: rgba(255, 0, 191, 0.3);
 }
