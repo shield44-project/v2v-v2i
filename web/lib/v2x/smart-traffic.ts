@@ -160,11 +160,11 @@ export function generateSmartTrafficState(
   const timings = calculateSignalTimings(config.currentMode, trafficDistribution, config.evRoute);
 
   // Calculate signal states based on mode
-  const signals = {
-    north: 'red' as const,
-    south: 'red' as const,
-    east: 'red' as const,
-    west: 'red' as const,
+  const signals: SmartTrafficState["signals"] = {
+    north: 'red',
+    south: 'red',
+    east: 'red',
+    west: 'red',
   };
 
   if (config.currentMode === 'emergency' && config.evRoute) {
