@@ -155,7 +155,7 @@ export async function playVoiceMessageSequence(
 export function stopVoicePlayback(): void {
   const speechSynthesis = window.speechSynthesis;
   if (speechSynthesis) {
-    speechSynthesis.cancelall();
+    speechSynthesis.cancel();
   }
 }
 
@@ -215,7 +215,11 @@ export function useVoiceNotification(config?: VoiceNotificationConfig) {
  * Create notification sound alternative (for browsers without TTS support)
  */
 export function playNotificationSound(type: 'alert' | 'warning' | 'critical'): void {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const browserWindow = window as Window & {
+    AudioContext?: typeof AudioContext;
+    webkitAudioContext?: typeof AudioContext;
+  };
+  const AudioContextClass = browserWindow.AudioContext || browserWindow.webkitAudioContext;
   if (!AudioContextClass) {
     return;
   }
