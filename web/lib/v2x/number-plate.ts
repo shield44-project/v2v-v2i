@@ -118,8 +118,9 @@ const VEHICLE_DATABASE: Record<string, VehicleRecord> = {
  * Simulate OCR - In production, use Tesseract.js or cloud API
  */
 export async function recognizeNumberPlateOCR(
-  _imageData: string | HTMLImageElement | Canvas
+  _imageData: string | HTMLImageElement | HTMLCanvasElement
 ): Promise<NumberPlateOCRResult> {
+  void _imageData;
   // Simulate OCR processing
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -207,7 +208,7 @@ export function addVehicleToDatabase(vehicle: VehicleRecord): boolean {
  * Full pipeline: Image → OCR → Normalize → Lookup
  */
 export async function recognizeVehicleFromImage(
-  imageData: string | HTMLImageElement | Canvas
+  imageData: string | HTMLImageElement | HTMLCanvasElement
 ): Promise<PlateRecognitionResult> {
   const ocrResult = await recognizeNumberPlateOCR(imageData);
   const normalized = normalizeNumberPlate(ocrResult.text);

@@ -12,7 +12,6 @@ export interface TrafficModeConfig {
   averageSpeed: number; // km/h
   lastSwitchTime: string;
   switchReason: string;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 }
 
 export interface SignalTiming {
@@ -49,6 +48,8 @@ export function determineTrafficMode(
   averageSpeed: number,
   currentMode: TrafficMode
 ): { mode: TrafficMode; reason: string } {
+  void currentMode;
+
   // Emergency mode takes priority
   if (evPresent) {
     return {

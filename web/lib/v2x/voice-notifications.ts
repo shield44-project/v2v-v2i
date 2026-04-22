@@ -215,7 +215,12 @@ export function useVoiceNotification(config?: VoiceNotificationConfig) {
  * Create notification sound alternative (for browsers without TTS support)
  */
 export function playNotificationSound(type: 'alert' | 'warning' | 'critical'): void {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return;
+  }
+
+  const audioContext = new AudioContextClass();
   const now = audioContext.currentTime;
 
   // Create oscillator for beep

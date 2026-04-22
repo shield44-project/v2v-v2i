@@ -54,18 +54,6 @@ export interface HistoricalPollutionData {
 }
 
 /**
- * WHO/EPA Air Quality Index Categories
- */
-const AQI_BREAKPOINTS = {
-  good: { min: 0, max: 50, category: 'Good' as const, color: '#10b981' },
-  satisfactory: { min: 51, max: 100, category: 'Satisfactory' as const, color: '#fbbf24' },
-  moderatelyPolluted: { min: 101, max: 200, category: 'Moderately Polluted' as const, color: '#f97316' },
-  poor: { min: 201, max: 300, category: 'Poor' as const, color: '#ef4444' },
-  veryPoor: { min: 301, max: 400, category: 'Very Poor' as const, color: '#991b1b' },
-  severe: { min: 401, max: 500, category: 'Severe' as const, color: '#7c2d12' },
-};
-
-/**
  * Calculate AQI from pollutant measurements
  * Based on EPA/AQI formula
  */
@@ -112,9 +100,9 @@ export function calculateAQI(pollutants: Partial<AirQualityData>): {
 /**
  * Calculate sub-index for individual pollutant
  */
-function calculatePollutantAQI(concentration: number, pollutant: PollutantType): number {
+function calculatePollutantAQI(concentration: number, pollutant: Exclude<PollutantType, 'AQI'>): number {
   // Simplified sub-index calculation (full formula requires breakpoint tables)
-  const breakpoints: Record<PollutantType, { concentration: number; index: number }[]> = {
+  const breakpoints: Record<Exclude<PollutantType, 'AQI'>, { concentration: number; index: number }[]> = {
     'PM2.5': [
       { concentration: 12, index: 50 },
       { concentration: 35.5, index: 100 },
@@ -204,9 +192,6 @@ export function predictPollution(
   const now = new Date();
   const hour = now.getHours();
 
-  // Peak traffic hours: 7-9 AM, 5-8 PM
-  const trafficFactor = [7, 8, 17, 18, 19, 20].includes(hour) ? 1.3 : 0.9;
-
   // Wind dispersion: higher wind = better dispersion
   const windFactor = Math.max(0.5, 1 - weatherForecast.windSpeed / 15);
 
@@ -250,14 +235,14 @@ export function predictPollution(
       averageEmissions: (trafficDensity * 500),
       contributionPercentage: trafficDensity * 50,
     },
-    healthAdvisory: generateHealthAdvisory(currentAQI.aqi, trafficDensity),
+    healthAdvisory: generateHealthAdvisory(currentAQI.aqi),
   };
 }
 
 /**
  * Generate health advisory based on AQI
  */
-function generateHealthAdvisory(aqi: number, trafficDensity: number): string {
+function generateHealthAdvisory(aqi: number): string {
   if (aqi <= 50) {
     return '✓ Air quality is good. Safe for outdoor activities.';
   } else if (aqi <= 100) {

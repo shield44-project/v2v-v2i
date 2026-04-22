@@ -159,7 +159,8 @@ export function createAccidentNotification(
       },
       metadata: {
         severity,
-        vehiclesInvolved: vehicles,
+        vehiclesCount: vehicles.length,
+        vehicleIds: vehicles.join(', '),
       },
       action: {
         label: 'View Details',
