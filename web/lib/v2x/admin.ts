@@ -8,6 +8,7 @@ export const ADMIN_EMAILS_HARDCODED: readonly string[] = [
   "ksthejas060@gmail.com",
   "kstejas2718@gmail.com",
   "vishal797577@gmail.com",
+  "ayushkbhat11@gmail.com",
 ] as const;
 
 // ── Demo admin credentials (fallback for non-Google access) ────────────────
